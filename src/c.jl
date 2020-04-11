@@ -1,0 +1,432 @@
+
+#
+# C API
+#
+
+function blpapi_getVersionInfo(majorVersion::Ref{Cint}, minorVersion::Ref{Cint}, patchVersion::Ref{Cint}, buildVersion::Ref{Cint})
+    ccall((:blpapi_getVersionInfo, libblpapi3), Cvoid, (Ref{Cint}, Ref{Cint}, Ref{Cint}, Ref{Cint}), majorVersion, minorVersion, patchVersion, buildVersion)
+end
+
+# const char* blpapi_getLastErrorDescription(int resultCode);
+function blpapi_getLastErrorDescription(resultCode::Cint) :: String
+    unsafe_string(ccall((:blpapi_getLastErrorDescription, :blpapi3_64), Cstring, (Cint,), resultCode))
+end
+
+#
+# blpapi_sessionoptions.h
+#
+
+#blpapi_SessionOptions_t *blpapi_SessionOptions_create(void);
+function blpapi_SessionOptions_create()
+    ccall((:blpapi_SessionOptions_create, libblpapi3), Ptr{Cvoid}, ())
+end
+
+#void blpapi_SessionOptions_destroy(blpapi_SessionOptions_t *parameters);
+function blpapi_SessionOptions_destroy(options_handle::Ptr{Cvoid})
+    ccall((:blpapi_SessionOptions_destroy, libblpapi3), Cvoid, (Ptr{Cvoid},), options_handle)
+end
+
+#const char *blpapi_SessionOptions_serverHost(
+#                                          blpapi_SessionOptions_t *parameters);
+function blpapi_SessionOptions_serverHost(opt_handle::Ptr{Cvoid})
+    ccall((:blpapi_SessionOptions_serverHost, libblpapi3), Ptr{UInt8}, (Ptr{Cvoid},), opt_handle)
+end
+
+#unsigned int blpapi_SessionOptions_serverPort(
+#                                          blpapi_SessionOptions_t *parameters);
+function blpapi_SessionOptions_serverPort(options_handle::Ptr{Cvoid})
+    ccall((:blpapi_SessionOptions_serverPort, libblpapi3), UInt32, (Ptr{Cvoid},), options_handle)
+end
+
+#int blpapi_SessionOptions_setServerHost(blpapi_SessionOptions_t *parameters,
+#                                        const char              *serverHost);
+function blpapi_SessionOptions_setServerHost(options_handle::Ptr{Cvoid}, server_host::AbstractString)
+    ccall((:blpapi_SessionOptions_setServerHost, libblpapi3), Cint, (Ptr{Cvoid}, Cstring), options_handle, server_host)
+end
+
+#void blpapi_SessionOptions_setClientMode(blpapi_SessionOptions_t *parameters,
+#                                         int                      clientMode);
+function blpapi_SessionOptions_setClientMode(options_handle::Ptr{Cvoid}, client_mode::Integer)
+    ccall((:blpapi_SessionOptions_setClientMode, libblpapi3), Cvoid, (Ptr{Cvoid}, Cint), options_handle, client_mode)
+end
+
+#int blpapi_SessionOptions_clientMode(
+#                                          blpapi_SessionOptions_t *parameters);
+function blpapi_SessionOptions_clientMode(options_handle::Ptr{Cvoid})
+    ccall((:blpapi_SessionOptions_clientMode, libblpapi3), Cint, (Ptr{Cvoid},), options_handle)
+end
+
+#int blpapi_SessionOptions_setServerPort(blpapi_SessionOptions_t *parameters,
+#                                        unsigned short           serverPort);
+function blpapi_SessionOptions_setServerPort(options_handle::Ptr{Cvoid}, server_port::UInt16)
+    ccall((:blpapi_SessionOptions_setServerPort, libblpapi3), Cint, (Ptr{Cvoid}, UInt16), options_handle, server_port)
+end
+
+#int blpapi_SessionOptions_setServiceCheckTimeout(
+#                                        blpapi_SessionOptions_t *paramaters,
+#                                        int                      timeoutMsecs);
+function blpapi_SessionOptions_setServiceCheckTimeout(options_handle::Ptr{Cvoid}, timeout_msecs::Integer)
+    ccall((:blpapi_SessionOptions_setServiceCheckTimeout, libblpapi3), Cint, (Ptr{Cvoid}, Cint), options_handle, timeout_msecs)
+end
+
+#int blpapi_SessionOptions_setServiceDownloadTimeout(
+#                                        blpapi_SessionOptions_t *paramaters,
+#                                        int                      timeoutMsecs);
+function blpapi_SessionOptions_setServiceDownloadTimeout(options_handle::Ptr{Cvoid}, timeout_msecs::Integer)
+    ccall((:blpapi_SessionOptions_setServiceDownloadTimeout, libblpapi3), Cint, (Ptr{Cvoid}, Cint), options_handle, timeout_msecs)
+end
+
+#
+# blpapi_session.h
+#
+
+#blpapi_Session_t* blpapi_Session_create(
+#        blpapi_SessionOptions_t *parameters,
+#        blpapi_EventHandler_t handler,
+#        blpapi_EventDispatcher_t* dispatcher,
+#        void *userData);
+function blpapi_Session_create(options_handle::Ptr{Cvoid}, event_handler_handle::Ptr{Cvoid}, dispatcher_handler::Ptr{Cvoid}, user_data_handle::Ptr{Cvoid})
+    ccall((:blpapi_Session_create, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}), options_handle, event_handler_handle, dispatcher_handler, user_data_handle)
+end
+
+#void blpapi_Session_destroy(
+#        blpapi_Session_t *session);
+function blpapi_Session_destroy(session_handle::Ptr{Cvoid})
+    ccall((:blpapi_Session_destroy, libblpapi3), Cvoid, (Ptr{Cvoid},), session_handle)
+end
+
+#int blpapi_Session_start(
+#        blpapi_Session_t *session);
+function blpapi_Session_start(session_handle::Ptr{Cvoid})
+    ccall((:blpapi_Session_start, libblpapi3), Cint, (Ptr{Cvoid},), session_handle)
+end
+
+#int blpapi_Session_stop(
+#        blpapi_Session_t* session);
+function blpapi_Session_stop(session_handle::Ptr{Cvoid})
+    ccall((:blpapi_Session_stop, libblpapi3), Cint, (Ptr{Cvoid},), session_handle)
+end
+
+#int blpapi_Session_openService(
+#        blpapi_Session_t *session,
+#        const char* serviceName);
+function blpapi_Session_openService(session_handle::Ptr{Cvoid}, service_name::AbstractString)
+    ccall((:blpapi_Session_openService, libblpapi3), Cint, (Ptr{Cvoid}, Cstring), session_handle, service_name)
+end
+
+#int blpapi_Session_getService(
+#        blpapi_Session_t *session,
+#        blpapi_Service_t **service,
+#        const char* serviceName);
+function blpapi_Session_getService(session_handle::Ptr{Cvoid}, service_handle_ref::Ref{Ptr{Cvoid}}, service_name::AbstractString)
+    ccall((:blpapi_Session_getService, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Cstring), session_handle, service_handle_ref, service_name)
+end
+
+#
+# blpapi_service.h
+#
+
+# const char* blpapi_Service_name(blpapi_Service_t *service);
+function blpapi_Service_name(service_handle::Ptr{Cvoid})
+    ccall((:blpapi_Service_name, libblpapi3), Cstring, (Ptr{Cvoid},), service_handle)
+end
+
+# int blpapi_Service_numOperations(blpapi_Service_t *service);
+function blpapi_Service_numOperations(service_handle::Ptr{Cvoid})
+    ccall((:blpapi_Service_numOperations, libblpapi3), Cint, (Ptr{Cvoid},), service_handle)
+end
+
+# int blpapi_Service_getOperationAt(
+#        blpapi_Service_t *service,
+#        blpapi_Operation_t **operation,
+#        size_t index);
+function blpapi_Service_getOperationAt(service_handle::Ptr{Cvoid}, operation_handle_ref::Ref{Ptr{Cvoid}}, index::Integer)
+    ccall((:blpapi_Service_getOperationAt, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Csize_t), service_handle, operation_handle_ref, index)
+end
+
+# int blpapi_Service_getOperation(
+#        blpapi_Service_t *service,
+#        blpapi_Operation_t **operation,
+#        const char* nameString,
+#        const blpapi_Name_t *name);
+function blpapi_Service_getOperation(service_handle::Ptr{Cvoid}, operation_handle_ref::Ref{Ptr{Cvoid}}, name::AbstractString, blpapiname::Ptr{Cvoid})
+    ccall((:blpapi_Service_getOperation, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Cstring, Ptr{Cvoid}), service_handle, operation_handle_ref, name, blpapiname)
+end
+
+# const char* blpapi_Operation_name(blpapi_Operation_t *service);
+function blpapi_Operation_name(operation_handle::Ptr{Cvoid})
+    ccall((:blpapi_Operation_name, libblpapi3), Cstring, (Ptr{Cvoid},), operation_handle)
+end
+
+#int blpapi_Operation_requestDefinition(
+#        blpapi_Operation_t *service,
+#        blpapi_SchemaElementDefinition_t **requestDefinition);
+function blpapi_Operation_requestDefinition(operation_handle::Ptr{Cvoid}, element_definition_handle_ref::Ref{Ptr{Cvoid}})
+    ccall((:blpapi_Operation_requestDefinition, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}), operation_handle, element_definition_handle_ref)
+end
+
+#int blpapi_Operation_numResponseDefinitions(
+#        blpapi_Operation_t *service);
+function blpapi_Operation_numResponseDefinitions(operation_handle::Ptr{Cvoid})
+    ccall((:blpapi_Operation_numResponseDefinitions, libblpapi3), Cint, (Ptr{Cvoid},), operation_handle)
+end
+
+#int blpapi_Operation_responseDefinition(
+#        blpapi_Operation_t *service,
+#        blpapi_SchemaElementDefinition_t **responseDefinition,
+#        size_t index);
+function blpapi_Operation_responseDefinition(operation_handle::Ptr{Cvoid}, element_definition_handle_ref::Ref{Ptr{Cvoid}}, index::Csize_t)
+    ccall((:blpapi_Operation_responseDefinition, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Csize_t), operation_handle, element_definition_handle_ref, index)
+end
+
+#
+# blpapi_schema.h
+#
+
+#blpapi_Name_t *blpapi_SchemaElementDefinition_name(
+#        const blpapi_SchemaElementDefinition_t *field);
+function blpapi_SchemaElementDefinition_name(schema_element_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaElementDefinition_name, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), schema_element_handle)
+end
+
+#int blpapi_SchemaElementDefinition_status(
+#        const blpapi_SchemaElementDefinition_t *field);
+function blpapi_SchemaElementDefinition_status(schema_element_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaElementDefinition_status, libblpapi3), Cint, (Ptr{Cvoid},), schema_element_handle)
+end
+
+#size_t blpapi_SchemaElementDefinition_numAlternateNames(
+#        const blpapi_SchemaElementDefinition_t *field);
+function blpapi_SchemaElementDefinition_numAlternateNames(schema_element_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaElementDefinition_numAlternateNames, libblpapi3), Csize_t, (Ptr{Cvoid},), schema_element_handle)
+end
+
+#blpapi_Name_t *blpapi_SchemaElementDefinition_getAlternateName(
+#        const blpapi_SchemaElementDefinition_t *field,
+#        size_t index);
+function blpapi_SchemaElementDefinition_getAlternateName(schema_element_handle::Ptr{Cvoid}, index::Integer)
+    ccall((:blpapi_SchemaElementDefinition_getAlternateName, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Csize_t), schema_element_handle, index)
+end
+
+#size_t blpapi_SchemaElementDefinition_minValues(
+#        const blpapi_SchemaElementDefinition_t *field);
+function blpapi_SchemaElementDefinition_minValues(schema_element_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaElementDefinition_minValues, libblpapi3), Csize_t, (Ptr{Cvoid},), schema_element_handle)
+end
+
+#size_t blpapi_SchemaElementDefinition_maxValues(
+#        const blpapi_SchemaElementDefinition_t *field);
+function blpapi_SchemaElementDefinition_maxValues(schema_element_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaElementDefinition_maxValues, libblpapi3), Csize_t, (Ptr{Cvoid},), schema_element_handle)
+end
+
+#blpapi_SchemaTypeDefinition_t *blpapi_SchemaElementDefinition_type(
+#        const blpapi_SchemaElementDefinition_t *field);
+function blpapi_SchemaElementDefinition_type(schema_element_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaElementDefinition_type, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), schema_element_handle)
+end
+
+#blpapi_Name_t *blpapi_SchemaTypeDefinition_name(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_name(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_name, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#const char *blpapi_SchemaTypeDefinition_description(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_description(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_description, libblpapi3), Cstring, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#int blpapi_SchemaTypeDefinition_status(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_status(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_status, libblpapi3), Cint, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#int blpapi_SchemaTypeDefinition_datatype(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_datatype(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_datatype, libblpapi3), Cint, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#int blpapi_SchemaTypeDefinition_isComplex(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_isComplex(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_isComplex, libblpapi3), Cint, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#int blpapi_SchemaTypeDefinition_isSimple(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_isSimple(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_isSimple, libblpapi3), Cint, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#int blpapi_SchemaTypeDefinition_isEnumeration(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_isEnumeration(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_isEnumeration, libblpapi3), Cint, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#size_t blpapi_SchemaTypeDefinition_numElementDefinitions(
+#        const blpapi_SchemaTypeDefinition_t *type);
+function blpapi_SchemaTypeDefinition_numElementDefinitions(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_numElementDefinitions, libblpapi3), Csize_t, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#blpapi_SchemaElementDefinition_t*
+#blpapi_SchemaTypeDefinition_getElementDefinitionAt(
+#        const blpapi_SchemaTypeDefinition_t *type,
+#        size_t index);
+function blpapi_SchemaTypeDefinition_getElementDefinitionAt(schema_type_handle::Ptr{Cvoid}, index::Integer)
+    ccall((:blpapi_SchemaTypeDefinition_getElementDefinitionAt, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Csize_t), schema_type_handle, index)
+end
+
+#blpapi_ConstantList_t*
+#blpapi_SchemaTypeDefinition_enumeration(
+#        const blpapi_SchemaTypeDefinition_t *element);
+function blpapi_SchemaTypeDefinition_enumeration(schema_type_handle::Ptr{Cvoid})
+    ccall((:blpapi_SchemaTypeDefinition_enumeration, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), schema_type_handle)
+end
+
+#
+# blpapi_name.h
+#
+
+#void blpapi_Name_destroy(
+#        blpapi_Name_t *name);
+function blpapi_Name_destroy(name_handle::Ptr{Cvoid})
+    ccall((:blpapi_Name_destroy, libblpapi3), Cvoid, (Ptr{Cvoid},), name_handle)
+end
+
+#const char* blpapi_Name_string(
+#        const blpapi_Name_t *name);
+function blpapi_Name_string(name_handle::Ptr{Cvoid})
+    ccall((:blpapi_Name_string, libblpapi3), Cstring, (Ptr{Cvoid},), name_handle)
+end
+
+#blpapi_Name_t* blpapi_Name_findName(
+#        const char* nameString);
+function blpapi_Name_findName(name::AbstractString)
+    ccall((:blpapi_Name_findName, libblpapi3), Ptr{Cvoid}, (Cstring,), name)
+end
+
+#blpapi_Name_t* blpapi_Name_create(
+#        const char* nameString);
+function blpapi_Name_create(name::AbstractString)
+    ccall((:blpapi_Name_create, libblpapi3), Ptr{Cvoid}, (Cstring,), name)
+end
+
+#
+# blpapi_constant.h
+#
+
+#blpapi_Name_t* blpapi_Constant_name(
+#        const blpapi_Constant_t *constant);
+function blpapi_Constant_name(const_handle::Ptr{Cvoid})
+    ccall((:blpapi_Constant_name, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), const_handle)
+end
+
+#const char* blpapi_Constant_description(
+#        const blpapi_Constant_t *constant);
+function blpapi_Constant_description(const_handle::Ptr{Cvoid})
+    ccall((:blpapi_Constant_description, libblpapi3), Cstring, (Ptr{Cvoid},), const_handle)
+end
+
+#int blpapi_Constant_status(
+#        const blpapi_Constant_t *constant);
+function blpapi_Constant_status(const_handle::Ptr{Cvoid})
+    ccall((:blpapi_Constant_status, libblpapi3), Cint, (Ptr{Cvoid},), const_handle)
+end
+
+#int blpapi_Constant_datatype(
+#        const blpapi_Constant_t *constant);
+function blpapi_Constant_datatype(const_handle::Ptr{Cvoid})
+    ccall((:blpapi_Constant_datatype, libblpapi3), Cint, (Ptr{Cvoid},), const_handle)
+end
+
+#int blpapi_Constant_getValueAsChar(
+#    const blpapi_Constant_t *constant,
+#    blpapi_Char_t *buffer);
+function blpapi_Constant_getValueAsChar(const_handle::Ptr{Cvoid}, buffer::Ref{Cchar})
+    ccall((:blpapi_Constant_getValueAsChar, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Cchar}), const_handle, buffer)
+end
+
+#int blpapi_Constant_getValueAsInt32(
+#    const blpapi_Constant_t *constant,
+#    blpapi_Int32_t *buffer);
+function blpapi_Constant_getValueAsInt32(const_handle::Ptr{Cvoid}, buffer::Ref{Cint})
+    ccall((:blpapi_Constant_getValueAsInt32, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Cint}), const_handle, buffer)
+end
+
+#int blpapi_Constant_getValueAsInt64(
+#    const blpapi_Constant_t *constant,
+#    blpapi_Int64_t *buffer);
+function blpapi_Constant_getValueAsInt64(const_handle::Ptr{Cvoid}, buffer::Ref{Int64})
+    ccall((:blpapi_Constant_getValueAsInt64, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Int64}), const_handle, buffer)
+end
+
+#int blpapi_Constant_getValueAsFloat32(
+#    const blpapi_Constant_t *constant,
+#    blpapi_Float32_t *buffer);
+function blpapi_Constant_getValueAsFloat32(const_handle::Ptr{Cvoid}, buffer::Ref{Float32})
+    ccall((:blpapi_Constant_getValueAsFloat32, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Float32}), const_handle, buffer)
+end
+
+#int blpapi_Constant_getValueAsFloat64(
+#    const blpapi_Constant_t *constant,
+#    blpapi_Float64_t *buffer);
+function blpapi_Constant_getValueAsFloat64(const_handle::Ptr{Cvoid}, buffer::Ref{Float64})
+    ccall((:blpapi_Constant_getValueAsFloat64, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Float64}), const_handle, buffer)
+end
+
+#int blpapi_Constant_getValueAsDatetime(
+#    const blpapi_Constant_t *constant,
+#    blpapi_Datetime_t *buffer);
+function blpapi_Constant_getValueAsDatetime(const_handle::Ptr{Cvoid}, buffer::Ref{BLPDateTime})
+    ccall((:blpapi_Constant_getValueAsDatetime, libblpapi3), Cint, (Ptr{Cvoid}, Ref{BLPDateTime}), const_handle, buffer)
+end
+
+#int blpapi_Constant_getValueAsString(
+#    const blpapi_Constant_t *constant,
+#    const char **buffer);
+function blpapi_Constant_getValueAsString(const_handle::Ptr{Cvoid}, buffer::Ref{Cstring})
+    ccall((:blpapi_Constant_getValueAsString, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Cstring}), const_handle, buffer)
+end
+
+#blpapi_Name_t* blpapi_ConstantList_name(
+#        const blpapi_ConstantList_t *list);
+function blpapi_ConstantList_name(list_handle::Ptr{Cvoid})
+    ccall((:blpapi_ConstantList_name, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), list_handle)
+end
+
+#const char* blpapi_ConstantList_description(
+#        const blpapi_ConstantList_t *list);
+function blpapi_ConstantList_description(list_handle::Ptr{Cvoid})
+    ccall((:blpapi_ConstantList_description, libblpapi3), Cstring, (Ptr{Cvoid},), list_handle)
+end
+
+#int blpapi_ConstantList_numConstants(
+#        const blpapi_ConstantList_t *list);
+function blpapi_ConstantList_numConstants(list_handle::Ptr{Cvoid})
+    ccall((:blpapi_ConstantList_numConstants, libblpapi3), Cint, (Ptr{Cvoid},), list_handle)
+end
+
+#int blpapi_ConstantList_datatype(
+#        const blpapi_ConstantList_t *constant);
+function blpapi_ConstantList_datatype(list_handle::Ptr{Cvoid})
+    ccall((:blpapi_ConstantList_datatype, libblpapi3), Cint, (Ptr{Cvoid},), list_handle)
+end
+
+#int blpapi_ConstantList_status(
+#        const blpapi_ConstantList_t *list);
+function blpapi_ConstantList_status(list_handle::Ptr{Cvoid})
+    ccall((:blpapi_ConstantList_status, libblpapi3), Cint, (Ptr{Cvoid},), list_handle)
+end
+
+#blpapi_Constant_t* blpapi_ConstantList_getConstantAt(
+#        const blpapi_ConstantList_t *constant,
+#        size_t index);
+function blpapi_ConstantList_getConstantAt(list_handle::Ptr{Cvoid}, index::Integer)
+    ccall((:blpapi_ConstantList_getConstantAt, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Csize_t), list_handle, index)
+end
