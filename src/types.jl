@@ -49,6 +49,7 @@ end
     BLPAPI_STATUS_PENDING_DEPRECATION  = 3
 end
 
+# valuetype field of CorrelationId
 @enum CorrelationType::Cint begin
     BLPAPI_CORRELATION_TYPE_UNSET   = 0
     BLPAPI_CORRELATION_TYPE_INT     = 1
@@ -119,21 +120,12 @@ typedef struct blpapi_CorrelationId_t_ {
 } blpapi_CorrelationId_t;
 =#
 
-#=
 mutable struct CorrelationId
-#    unsigned int  size:8;       // fill in the size of this struct
-#    unsigned int  valueType:4;  // type of value held by this correlation id
-#    unsigned int  classId:16;   // user defined classification id
-#    unsigned int  reserved:4;   // for internal use must be 0
-    size_valueType_classId_reserved::UInt32
-    value::UInt64 # union with either UInt64 or Ptr
-end
-=#
-
-mutable struct CorrelationId
-    header::NTuple{8, UInt8}
+    header::UInt32
     value::UInt64
 end
+
+CorrelationId() = CorrelationId(UInt32(0), UInt64(0))
 
 mutable struct Service
     handle::Ptr{Cvoid}
@@ -299,4 +291,47 @@ struct Operation{S<:SchemaElementDefinition}
     name::String
     request_definition::S
     response_definitions::Vector{AbstractSchemaElementDefinition}
+end
+
+mutable struct Request
+    handle::Ptr{Cvoid}
+    service::Service
+
+    function Request(handle::Ptr{Cvoid}, service::Service)
+        new_request = new(handle, service)
+        finalizer(destroy!, new_request)
+        return new_request
+    end
+end
+
+function destroy!(req::Request)
+    if req.handle != C_NULL
+        blpapi_Request_destroy(req.handle)
+        req.handle = C_NULL
+    end
+    nothing
+end
+
+# D holds the value of `datatype` field.
+abstract type AbstractElement{D} end
+
+mutable struct Element{D,A,T} <: AbstractElement{D}
+    handle::Ptr{Cvoid}
+    name::BLPName
+    datatype::BLPDataType
+    is_array::Bool
+    source::T # Request or any other parent
+
+    function Element(handle::Ptr{Cvoid}, source::T) where {T}
+        ptr_check(handle, "Failed to create Element")
+        name = BLPName(blpapi_Element_name(handle))
+        datatype = BLPDataType(blpapi_Element_datatype(handle))
+        is_array = blpapi_Element_isArray(handle) != 0
+
+        new{datatype, is_array, T}(handle, name, datatype, is_array, source)
+    end
+end
+
+function is_array(::Type{Element{D,A,T}}) :: Bool where {D,A,T}
+    A
 end

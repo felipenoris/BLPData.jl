@@ -9,7 +9,10 @@ include("c.jl")
 include("constant.jl")
 include("blpname.jl")
 include("session.jl")
+include("service.jl")
 include("schema.jl")
+include("element.jl")
+include("request.jl")
 include("print.jl")
 
 function __init__()
@@ -47,8 +50,6 @@ function ptr_check(ptr::Ptr{Cvoid}, ctx_msg::AbstractString)
 
     nothing
 end
-
-blp_date_string(date::Date) :: String = Dates.format(date, dateformat"yyyymmdd")
 
 """
     get_version_info() :: VersionInfo

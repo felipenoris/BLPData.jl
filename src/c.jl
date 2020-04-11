@@ -3,6 +3,9 @@
 # C API
 #
 
+"Indicates that the element will be appended to the list on `blpapi_Element_set` functions (`blpapi_defs.h`)."
+const BLPAPI_ELEMENT_INDEX_END = 0xffffffff
+
 function blpapi_getVersionInfo(majorVersion::Ref{Cint}, minorVersion::Ref{Cint}, patchVersion::Ref{Cint}, buildVersion::Ref{Cint})
     ccall((:blpapi_getVersionInfo, libblpapi3), Cvoid, (Ref{Cint}, Ref{Cint}, Ref{Cint}, Ref{Cint}), majorVersion, minorVersion, patchVersion, buildVersion)
 end
@@ -122,6 +125,17 @@ function blpapi_Session_getService(session_handle::Ptr{Cvoid}, service_handle_re
     ccall((:blpapi_Session_getService, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Cstring), session_handle, service_handle_ref, service_name)
 end
 
+#int blpapi_Session_sendRequest(
+#        blpapi_Session_t *session,
+#        const blpapi_Request_t *request,
+#        blpapi_CorrelationId_t *correlationId,
+#        blpapi_Identity_t *identity,
+#        blpapi_EventQueue_t *eventQueue,
+#        const char *requestLabel,
+#        int requestLabelLen);
+function blpapi_Session_sendRequest(session_handle::Ptr{Cvoid}, request_handle::Ptr{Cvoid}, correlation_ref::Ref{CorrelationId})
+    ccall((:blpapi_Session_sendRequest, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ref{CorrelationId}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Cint), session_handle, request_handle, correlation_ref, C_NULL, C_NULL, C_NULL, 0)
+end
 #
 # blpapi_service.h
 #
@@ -151,6 +165,14 @@ end
 #        const blpapi_Name_t *name);
 function blpapi_Service_getOperation(service_handle::Ptr{Cvoid}, operation_handle_ref::Ref{Ptr{Cvoid}}, name::AbstractString, blpapiname::Ptr{Cvoid})
     ccall((:blpapi_Service_getOperation, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Cstring, Ptr{Cvoid}), service_handle, operation_handle_ref, name, blpapiname)
+end
+
+#int blpapi_Service_createRequest(
+#        blpapi_Service_t* service,
+#        blpapi_Request_t** request,
+#        const char *operation);
+function blpapi_Service_createRequest(service_handle::Ptr{Cvoid}, request_handle_ref::Ref{Ptr{Cvoid}}, operation_name::AbstractString)
+    ccall((:blpapi_Service_createRequest, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Cstring), service_handle, request_handle_ref, operation_name)
 end
 
 # const char* blpapi_Operation_name(blpapi_Operation_t *service);
@@ -429,4 +451,65 @@ end
 #        size_t index);
 function blpapi_ConstantList_getConstantAt(list_handle::Ptr{Cvoid}, index::Integer)
     ccall((:blpapi_ConstantList_getConstantAt, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Csize_t), list_handle, index)
+end
+
+#
+# blpapi_request.h
+#
+
+#void blpapi_Request_destroy(
+#        blpapi_Request_t *request);
+function blpapi_Request_destroy(request_handle::Ptr{Cvoid})
+    ccall((:blpapi_Request_destroy, libblpapi3), Cvoid, (Ptr{Cvoid},), request_handle)
+end
+
+#blpapi_Element_t* blpapi_Request_elements(
+#        blpapi_Request_t *request);
+function blpapi_Request_elements(request_handle::Ptr{Cvoid})
+    ccall((:blpapi_Request_elements, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), request_handle)
+end
+
+#
+# blpapi_element.h
+#
+
+#BLPAPI_EXPORT blpapi_Name_t*
+#blpapi_Element_name(const blpapi_Element_t *element);
+function blpapi_Element_name(element_handle::Ptr{Cvoid})
+    ccall((:blpapi_Element_name, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), element_handle)
+end
+
+#BLPAPI_EXPORT blpapi_SchemaElementDefinition_t*
+#blpapi_Element_definition(const blpapi_Element_t* element);
+function blpapi_Element_definition(element_handle::Ptr{Cvoid})
+    ccall((:blpapi_Element_definition, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), element_handle)
+end
+
+#BLPAPI_EXPORT int blpapi_Element_datatype (
+#        const blpapi_Element_t* element);
+function blpapi_Element_datatype(element_handle::Ptr{Cvoid})
+    ccall((:blpapi_Element_datatype, libblpapi3), Cint, (Ptr{Cvoid},), element_handle)
+end
+
+#int blpapi_Element_getElement(
+#        const blpapi_Element_t *element,
+#        blpapi_Element_t **result,
+#        const char* nameString,
+#        const blpapi_Name_t *name);
+function blpapi_Element_getElement(element_handle::Ptr{Cvoid}, result_element_handle_ref::Ref{Ptr{Cvoid}}, element_name_string::Ptr{UInt8}, element_blp_name::Ptr{Cvoid})
+    ccall((:blpapi_Element_getElement, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Ptr{UInt8}, Ptr{Cvoid}), element_handle, result_element_handle_ref, element_name_string, element_blp_name)
+end
+
+#BLPAPI_EXPORT int blpapi_Element_isArray(
+#        const blpapi_Element_t* element);
+function blpapi_Element_isArray(element_handle::Ptr{Cvoid})
+    ccall((:blpapi_Element_isArray, libblpapi3), Cint, (Ptr{Cvoid},), element_handle)
+end
+
+#int blpapi_Element_setValueString(
+#        blpapi_Element_t *element,
+#        const char *value,
+#        size_t index);
+function blpapi_Element_setValueString(element_handle::Ptr{Cvoid}, value::AbstractString, index::Integer)
+    ccall((:blpapi_Element_setValueString, libblpapi3), Cint, (Ptr{Cvoid}, Cstring, Csize_t), element_handle, value, index)
 end
