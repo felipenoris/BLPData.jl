@@ -2,3 +2,16 @@ name = "BLP"
 uuid = "eb622722-88ce-45f2-a8b9-c2f73a5cb263"
 authors = ["felipenoris <felipenoris@gmail.com>"]
 version = "0.0.1"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
