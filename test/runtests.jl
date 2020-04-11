@@ -1,5 +1,5 @@
 
-using Test
+using Test, Dates
 import BLP
 
 @testset "Error Codes" begin
@@ -65,6 +65,9 @@ end
     session = BLP.Session("//blp/refdata")
     service = BLP.Service(session, "//blp/refdata")
 
+    println("operation names for $(service.name)")
+    println(BLP.list_operation_names(service))
+
     #for opindex in 1:BLP.get_num_operations(service)
     #    println(BLP.get_operation(service, opindex))
     #end
@@ -75,6 +78,27 @@ end
     @testset "HistoricalDataRequest" begin
         op = BLP.get_operation(service, "HistoricalDataRequest")
         @test op.name == "HistoricalDataRequest"
-        println(op)
+        #println(op)
     end
+end
+
+@testset "Request" begin
+    session = BLP.Session("//blp/refdata")
+    service = BLP.Service(session, "//blp/refdata")
+
+    req = BLP.Request(service, "HistoricalDataRequest")
+    elements = BLP.Element(req)
+    elements_schema = BLP.SchemaElementDefinition(elements)
+    @test elements_schema.name.symbol == :HistoricalDataRequest
+
+    push!(req["securities"], "IBM US Equity")
+    push!(req["fields"], "PX_LAST", "VWAP_VOLUME")
+    req["startDate"] = Date(2020, 1, 2)
+    req["endDate"] = Date(2020, 1, 31)
+
+    per = req["periodicitySelection"]
+    per_schema = BLP.SchemaElementDefinition(per)
+    println(per_schema)
+
+    BLP.send(req)
 end

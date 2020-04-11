@@ -79,3 +79,11 @@ end
 function Base.show(io::IO, blp_const::BLPConstant)
     println(io, "$(blp_const.name) - $(blp_const.description) - $(blp_const.status) - $(blp_const.datatype). Julia Value: $(blp_const.value)")
 end
+
+function Base.show(io::IO, element::Element{D, false, T}) where {D, T}
+    print(io, "Element $(element.name) <: $(element.datatype)")
+end
+
+function Base.show(io::IO, element::Element{D, true, T}) where {D, T}
+    print(io, "Element $(element.name) <: Vector{$(element.datatype)}")
+end
