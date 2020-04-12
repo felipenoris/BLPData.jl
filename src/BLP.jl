@@ -2,9 +2,11 @@
 module BLP
 
 using Dates
+using Printf
 
 include("deps.jl")
 include("types.jl")
+include("datetime.jl")
 include("c.jl")
 include("constant.jl")
 include("blpname.jl")
@@ -13,13 +15,15 @@ include("service.jl")
 include("schema.jl")
 include("element.jl")
 include("request.jl")
+include("message.jl")
 include("print.jl")
+include("bdh.jl")
 
 function __init__()
     check_deps()
 end
 
-function error_check(code::Cint)
+@inline function error_check(code::Cint)
     if code != 0
         error(blpapi_getLastErrorDescription(code))
     end
@@ -27,7 +31,7 @@ function error_check(code::Cint)
     nothing
 end
 
-function error_check(code::Cint, ctx_msg::AbstractString)
+@inline function error_check(code::Cint, ctx_msg::AbstractString)
     if code != 0
         error("$ctx_msg: $(blpapi_getLastErrorDescription(code))")
     end
@@ -35,7 +39,7 @@ function error_check(code::Cint, ctx_msg::AbstractString)
     nothing
 end
 
-function ptr_check(ptr::Ptr{Cvoid})
+@inline function ptr_check(ptr::Ptr{Cvoid})
     if ptr == C_NULL
         error("Got a NULL pointer.")
     end
@@ -43,7 +47,7 @@ function ptr_check(ptr::Ptr{Cvoid})
     nothing
 end
 
-function ptr_check(ptr::Ptr{Cvoid}, ctx_msg::AbstractString)
+@inline function ptr_check(ptr::Ptr{Cvoid}, ctx_msg::AbstractString)
     if ptr == C_NULL
         error("$ctx_msg: got a NULL pointer.")
     end

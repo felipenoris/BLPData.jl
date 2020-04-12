@@ -57,6 +57,24 @@ end
     BLPAPI_CORRELATION_TYPE_AUTOGEN = 3
 end
 
+# blpapi_defs.h
+@enum EventType::Cint begin
+    BLPAPI_EVENTTYPE_ADMIN                 = 1
+    BLPAPI_EVENTTYPE_SESSION_STATUS        = 2
+    BLPAPI_EVENTTYPE_SUBSCRIPTION_STATUS   = 3
+    BLPAPI_EVENTTYPE_REQUEST_STATUS        = 4
+    BLPAPI_EVENTTYPE_RESPONSE              = 5
+    BLPAPI_EVENTTYPE_PARTIAL_RESPONSE      = 6
+    BLPAPI_EVENTTYPE_SUBSCRIPTION_DATA     = 8
+    BLPAPI_EVENTTYPE_SERVICE_STATUS        = 9
+    BLPAPI_EVENTTYPE_TIMEOUT               = 10
+    BLPAPI_EVENTTYPE_AUTHORIZATION_STATUS  = 11
+    BLPAPI_EVENTTYPE_RESOLUTION_STATUS     = 12
+    BLPAPI_EVENTTYPE_TOPIC_STATUS          = 13
+    BLPAPI_EVENTTYPE_TOKEN_STATUS          = 14
+    BLPAPI_EVENTTYPE_REQUEST               = 15
+end
+
 """
 Represents the library version in use for Bloomberg API.
 
@@ -127,6 +145,8 @@ end
 
 CorrelationId() = CorrelationId(UInt32(0), UInt64(0))
 
+Base.:(==)(c1::CorrelationId, c2::CorrelationId) = c1.header == c2.header && c1.value == c2.value
+
 mutable struct Service
     handle::Ptr{Cvoid}
     name::String
@@ -172,7 +192,7 @@ struct BLPConstantList{D}
     list::Vector{BLPConstant}
 end
 
-"Wraps a blpapi_Datetime_t"
+"Wraps a blpapi_Datetime_t."
 struct BLPDateTime
     parts::UInt8 # bitmask of date/time parts that are set
     hours::UInt8
@@ -283,6 +303,7 @@ struct EnumerationSchemaTypeDefinition{T,L<:BLPConstantList} <: AbstractSchemaTy
     enumeration::L
 
     function EnumerationSchemaTypeDefinition(name::BLPName, description::String, status::SchemaStatus, datatype::BLPDataType, enumeration::L) where {L<:BLPConstantList}
+        @assert datatype == BLPAPI_DATATYPE_ENUMERATION
         new{datatype, L}(name, description, status, datatype, enumeration)
     end
 end
@@ -312,26 +333,86 @@ function destroy!(req::Request)
     nothing
 end
 
+# A holds the boolean result of `blpapi_Element_isArray`.
 # D holds the value of `datatype` field.
-abstract type AbstractElement{D} end
+abstract type AbstractElement{A,D} end
 
-mutable struct Element{D,A,T} <: AbstractElement{D}
+# A holds the boolean result of `blpapi_Element_isArray`.
+# D holds the value of `datatype` field.
+# T holds the type of the `source` field.
+mutable struct Element{A,D} <: AbstractElement{A,D}
     handle::Ptr{Cvoid}
     name::BLPName
     datatype::BLPDataType
     is_array::Bool
-    source::T # Request or any other parent
+    source::Any # Request or any other parent
 
-    function Element(handle::Ptr{Cvoid}, source::T) where {T}
+    function Element(handle::Ptr{Cvoid}, source)
         ptr_check(handle, "Failed to create Element")
         name = BLPName(blpapi_Element_name(handle))
         datatype = BLPDataType(blpapi_Element_datatype(handle))
         is_array = blpapi_Element_isArray(handle) != 0
 
-        new{datatype, is_array, T}(handle, name, datatype, is_array, source)
+        return new{is_array,datatype}(handle, name, datatype, is_array, source)
     end
 end
 
-function is_array(::Type{Element{D,A,T}}) :: Bool where {D,A,T}
-    A
+mutable struct Event
+    handle::Ptr{Cvoid}
+    event_type::EventType
+
+    function Event(handle::Ptr{Cvoid})
+        ptr_check(handle, "Failed to create Event")
+        event_type = EventType(blpapi_Event_eventType(handle))
+        new_event = new(handle, event_type)
+        finalizer(destroy!, new_event)
+        return new_event
+    end
+end
+
+function destroy!(event::Event)
+    if event.handle != C_NULL
+        err = blpapi_Event_release(event.handle)
+        error_check(err, "Failed to release event")
+        event.handle = C_NULL
+    end
+    nothing
+end
+
+mutable struct Message
+    handle::Ptr{Cvoid}
+    correlation_ids::Vector{CorrelationId}
+
+    function Message(handle::Ptr{Cvoid})
+        ptr_check(handle, "Failed to create Message")
+
+        num_corr_ids = blpapi_Message_numCorrelationIds(handle)
+        if num_corr_ids == 0
+            correlation_ids = Vector{CorrelationId}()
+        else
+            @assert num_corr_ids > 0
+            correlation_ids = [ blpapi_Message_correlationId(handle, i) for i in 0:(num_corr_ids-1) ]
+        end
+
+        return new(handle, correlation_ids)
+    end
+end
+
+mutable struct MessageIterator
+    handle::Ptr{Cvoid}
+
+    function MessageIterator(handle::Ptr{Cvoid})
+        ptr_check(handle, "Failed to create MessageIterator")
+        new_message_iterator = new(handle)
+        finalizer(destroy!, new_message_iterator)
+        return new_message_iterator
+    end
+end
+
+function destroy!(msg_iter::MessageIterator)
+    if msg_iter.handle != C_NULL
+        blpapi_MessageIterator_destroy(msg_iter.handle)
+        msg_iter.handle = C_NULL
+    end
+    nothing
 end

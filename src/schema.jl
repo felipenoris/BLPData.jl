@@ -8,9 +8,12 @@ end
 
 is_simple_datatype(datatype::BLPDataType) = !is_complex_datatype(datatype)
 
+# an enumeration is also a simple datatype
 function is_enumeration_datatype(datatype::BLPDataType) :: Bool
     return datatype == BLPAPI_DATATYPE_ENUMERATION
 end
+
+is_choice_datatype(datatype::BLPDataType) = datatype == BLPAPI_DATATYPE_CHOICE
 
 function AbstractSchemaTypeDefinition(handle::Ptr{Cvoid})
 
