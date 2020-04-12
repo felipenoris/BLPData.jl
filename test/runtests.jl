@@ -1,5 +1,5 @@
 
-using Test, Dates
+using Test, Dates, DataFrames
 import BLP
 
 @testset "Error Codes" begin
@@ -13,8 +13,15 @@ end
     println("BLPAPI Version: $vinfo")
 end
 
-@testset "Session Options" begin
+@testset "BLPDateTime" begin
+    today_dt = Dates.today()
+    @test today_dt == Date(BLP.BLPDateTime(today_dt))
+    now_dt = Dates.now()
+    @test now_dt == DateTime(BLP.BLPDateTime(now_dt))
+    show(BLP.BLPDateTime(now_dt, -180))
+end
 
+@testset "Session Options" begin
     @testset "Default" begin
         opt = BLP.SessionOptions()
         @test opt.handle != C_NULL
@@ -53,24 +60,21 @@ end
 end
 
 @testset "Session" begin
-    session = BLP.Session("//blp/mktdata", "//blp/refdata", service_download_timeout_msecs=2000)
+    session = BLP.Session(service_download_timeout_msecs=2000)
     @test session.handle != C_NULL
     BLP.stop(session)
     BLP.destroy!(session)
     @test session.handle == C_NULL
-    @test_throws ErrorException BLP.Session("//blp/refdata", port=9000)
+    @test_throws ErrorException BLP.Session("refdata", port=9000)
 end
 
+const SESSION = BLP.Session()
+
 @testset "Service" begin
-    session = BLP.Session("//blp/refdata")
-    service = BLP.Service(session, "//blp/refdata")
+    service = BLP.Service(SESSION, "refdata")
 
     println("operation names for $(service.name)")
     println(BLP.list_operation_names(service))
-
-    #for opindex in 1:BLP.get_num_operations(service)
-    #    println(BLP.get_operation(service, opindex))
-    #end
 
     @test BLP.has_operation(service, "HistoricalDataRequest")
     @test !BLP.has_operation(service, "HistoricalDatarequest")
@@ -78,27 +82,69 @@ end
     @testset "HistoricalDataRequest" begin
         op = BLP.get_operation(service, "HistoricalDataRequest")
         @test op.name == "HistoricalDataRequest"
-        #println(op)
+        println(op)
     end
 end
 
-@testset "Request" begin
-    session = BLP.Session("//blp/refdata")
-    service = BLP.Service(session, "//blp/refdata")
+@testset "bdh" begin
+    @time result = BLP.bdh(SESSION, "IBM US Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
+    df = DataFrame(result)
+    show(df)
 
-    req = BLP.Request(service, "HistoricalDataRequest")
-    elements = BLP.Element(req)
-    elements_schema = BLP.SchemaElementDefinition(elements)
-    @test elements_schema.name.symbol == :HistoricalDataRequest
+    @testset "periodicity" begin
+        x = BLP.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), periodicity="YEARLY")
+        @test length(x) == 2
+    end
 
-    push!(req["securities"], "IBM US Equity")
-    push!(req["fields"], "PX_LAST", "VWAP_VOLUME")
-    req["startDate"] = Date(2020, 1, 2)
-    req["endDate"] = Date(2020, 1, 31)
+    @testset "options" begin
+        options = Dict("periodicitySelection" => "YEARLY", "periodicityAdjustment" => "CALENDAR")
+        x = BLP.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), options=options)
+        @test length(x) == 2
+    end
 
-    per = req["periodicitySelection"]
-    per_schema = BLP.SchemaElementDefinition(per)
-    println(per_schema)
+    @testset "historical price" begin
+        ticker = "PETR4 BS Equity"
+        fields = [ "PX_LAST", "TURNOVER", "PX_BID", "PX_ASK", "EQY_WEIGHTED_AVG_PX", "EXCHANGE_VWAP" ]
+        options = Dict(
+            "periodicityAdjustment" => "CALENDAR",
+            "periodicitySelection" => "DAILY",
+            "currency" => "BRL",
+            "pricingOption" => "PRICING_OPTION_PRICE",
+            "nonTradingDayFillOption" => "ACTIVE_DAYS_ONLY",
+            "nonTradingDayFillMethod" => "NIL_VALUE",
+            "adjustmentFollowDPDF" => false,
+            "adjustmentNormal" => false,
+            "adjustmentAbnormal" => false,
+            "adjustmentSplit" => false
+        )
 
-    BLP.send(req)
+        x = BLP.bdh(SESSION, ticker, fields, Date(2019, 1, 1), Date(2019, 2, 10), options=options)
+        println(DataFrame(x))
+    end
+
+    @testset "adjusted price" begin
+        ticker = "PETR4 BS Equity"
+        field = "PX_LAST"
+        options = Dict(
+            "periodicityAdjustment" => "CALENDAR",
+            "periodicitySelection" => "DAILY",
+            "currency" => "BRL",
+            "pricingOption" => "PRICING_OPTION_PRICE",
+            "nonTradingDayFillOption" => "ACTIVE_DAYS_ONLY",
+            "nonTradingDayFillMethod" => "NIL_VALUE",
+            "adjustmentFollowDPDF" => false,
+            "adjustmentNormal" => true,
+            "adjustmentAbnormal" => true,
+            "adjustmentSplit" => true
+        )
+
+        x = BLP.bdh(SESSION, ticker, field, Date(2019, 1, 1), Date(2019, 2, 10), options=options)
+        println(DataFrame(x))
+    end
 end
+
+@testset "benchmarks" begin
+    @time result = BLP.bdh(SESSION, "PETR4 BS Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
+end
+
+BLP.stop(SESSION)

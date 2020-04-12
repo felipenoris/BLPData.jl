@@ -1,6 +1,10 @@
 
+@inline is_service_open(session::Session, service_name::AbstractString) = service_name ∈ session.opened_services
+@inline check_service_is_open(session::Session, service_name::AbstractString) = @assert is_service_open(session, service_name) "Service $service_name was not opened in this session."
+
 function Service(session::Session, service_name::AbstractString)
-    @assert service_name ∈ session.opened_services "Service $service_name was not opened in this session."
+    service_name = service_name_str(service_name)
+    check_service_is_open(session, service_name)
     service_handle_ref = Ref{Ptr{Cvoid}}(C_NULL)
     err = blpapi_Session_getService(session.handle, service_handle_ref, service_name)
     error_check(err, "Failed to get service $service_name.")

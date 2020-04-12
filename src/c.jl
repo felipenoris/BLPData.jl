@@ -136,6 +136,15 @@ end
 function blpapi_Session_sendRequest(session_handle::Ptr{Cvoid}, request_handle::Ptr{Cvoid}, correlation_ref::Ref{CorrelationId})
     ccall((:blpapi_Session_sendRequest, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ref{CorrelationId}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Cint), session_handle, request_handle, correlation_ref, C_NULL, C_NULL, C_NULL, 0)
 end
+
+#int blpapi_Session_nextEvent(
+#        blpapi_Session_t* session,
+#        blpapi_Event_t **eventPointer,
+#        unsigned int timeoutInMilliseconds);
+function blpapi_Session_nextEvent(session_handle::Ptr{Cvoid}, event_handle_ref::Ref{Ptr{Cvoid}}, timeout::UInt32)
+    ccall((:blpapi_Session_nextEvent, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, UInt32), session_handle, event_handle_ref, timeout)
+end
+
 #
 # blpapi_service.h
 #
@@ -197,7 +206,7 @@ end
 #        blpapi_Operation_t *service,
 #        blpapi_SchemaElementDefinition_t **responseDefinition,
 #        size_t index);
-function blpapi_Operation_responseDefinition(operation_handle::Ptr{Cvoid}, element_definition_handle_ref::Ref{Ptr{Cvoid}}, index::Csize_t)
+function blpapi_Operation_responseDefinition(operation_handle::Ptr{Cvoid}, element_definition_handle_ref::Ref{Ptr{Cvoid}}, index::Integer)
     ccall((:blpapi_Operation_responseDefinition, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Csize_t), operation_handle, element_definition_handle_ref, index)
 end
 
@@ -500,6 +509,29 @@ function blpapi_Element_getElement(element_handle::Ptr{Cvoid}, result_element_ha
     ccall((:blpapi_Element_getElement, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Ptr{UInt8}, Ptr{Cvoid}), element_handle, result_element_handle_ref, element_name_string, element_blp_name)
 end
 
+#int blpapi_Element_getElementAt(
+#        const blpapi_Element_t* element,
+#        blpapi_Element_t **result,
+#        size_t position);
+function blpapi_Element_getElementAt(element_handle::Ptr{Cvoid}, result_element_handle_ref::Ref{Ptr{Cvoid}}, index::Csize_t)
+    ccall((:blpapi_Element_getElementAt, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Csize_t), element_handle, result_element_handle_ref, index)
+end
+
+#int blpapi_Element_getChoice(
+#        const blpapi_Element_t *element,
+#        blpapi_Element_t **result);
+function blpapi_Element_getChoice(element_handle::Ptr{Cvoid}, result_element_handle_ref::Ref{Ptr{Cvoid}})
+    ccall((:blpapi_Element_getChoice, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}), element_handle, result_element_handle_ref)
+end
+
+#int blpapi_Element_hasElement(
+#        const blpapi_Element_t *element,
+#        const char* nameString,
+#        const blpapi_Name_t *name);
+function blpapi_Element_hasElement(element_handle::Ptr{Cvoid}, element_name_string::Ptr{UInt8}, element_blp_name::Ptr{Cvoid})
+    ccall((:blpapi_Element_hasElement, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}), element_handle, element_name_string, element_blp_name)
+end
+
 #BLPAPI_EXPORT int blpapi_Element_isArray(
 #        const blpapi_Element_t* element);
 function blpapi_Element_isArray(element_handle::Ptr{Cvoid})
@@ -512,4 +544,177 @@ end
 #        size_t index);
 function blpapi_Element_setValueString(element_handle::Ptr{Cvoid}, value::AbstractString, index::Integer)
     ccall((:blpapi_Element_setValueString, libblpapi3), Cint, (Ptr{Cvoid}, Cstring, Csize_t), element_handle, value, index)
+end
+
+#int blpapi_Element_setValueBool(
+#        blpapi_Element_t *element,
+#        blpapi_Bool_t value,
+#        size_t index);
+function blpapi_Element_setValueBool(element_handle::Ptr{Cvoid}, value::Bool, index::Integer)
+    ccall((:blpapi_Element_setValueBool, libblpapi3), Cint, (Ptr{Cvoid}, Cint, Csize_t), element_handle, value, index)
+end
+
+#BLPAPI_EXPORT size_t blpapi_Element_numElements(
+#        const blpapi_Element_t* element);
+function blpapi_Element_numElements(element_handle::Ptr{Cvoid})
+    ccall((:blpapi_Element_numElements, libblpapi3), Csize_t, (Ptr{Cvoid},), element_handle)
+end
+
+#BLPAPI_EXPORT size_t blpapi_Element_numValues(
+#        const blpapi_Element_t* element);
+function blpapi_Element_numValues(element_handle::Ptr{Cvoid})
+    ccall((:blpapi_Element_numValues, libblpapi3), Csize_t, (Ptr{Cvoid},), element_handle)
+end
+
+#int blpapi_Element_isNullValue(
+#        const blpapi_Element_t* element,
+#        size_t position);
+function blpapi_Element_isNullValue(element_handle::Ptr{Cvoid}, index::Integer)
+    ccall((:blpapi_Element_isNullValue, libblpapi3), Cint, (Ptr{Cvoid}, Csize_t), element_handle, index)
+end
+
+#BLPAPI_EXPORT int blpapi_Element_isNull(
+#        const blpapi_Element_t* element);
+function blpapi_Element_isNull(element_handle::Ptr{Cvoid})
+    ccall((:blpapi_Element_isNull, libblpapi3), Cint, (Ptr{Cvoid},), element_handle)
+end
+
+#int blpapi_Element_getValueAsBool(
+#        const blpapi_Element_t *element,
+#        blpapi_Bool_t *buffer,
+#        size_t index);
+function blpapi_Element_getValueAsBool(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Cint}, index::Integer)
+    ccall((:blpapi_Element_getValueAsBool, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Cint}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsChar(
+#        const blpapi_Element_t *element,
+#        blpapi_Char_t *buffer,
+#        size_t index);
+function blpapi_Element_getValueAsChar(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Cchar}, index::Integer)
+    ccall((:blpapi_Element_getValueAsChar, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Cchar}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsInt32(
+#        const blpapi_Element_t *element,
+#        blpapi_Int32_t *buffer,
+#        size_t index);
+function blpapi_Element_getValueAsInt32(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Int32}, index::Integer)
+    ccall((:blpapi_Element_getValueAsInt32, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Int32}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsInt64(
+#        const blpapi_Element_t *element,
+#        blpapi_Int64_t *buffer,
+#        size_t index);
+function blpapi_Element_getValueAsInt64(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Int64}, index::Integer)
+    ccall((:blpapi_Element_getValueAsInt64, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Int64}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsFloat32(
+#        const blpapi_Element_t *element,
+#        blpapi_Float32_t *buffer,
+#        size_t index);
+function blpapi_Element_getValueAsFloat32(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Float32}, index::Integer)
+    ccall((:blpapi_Element_getValueAsFloat32, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Float32}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsFloat64(
+#        const blpapi_Element_t *element,
+#        blpapi_Float64_t *buffer,
+#        size_t index);
+function blpapi_Element_getValueAsFloat64(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Float64}, index::Integer)
+    ccall((:blpapi_Element_getValueAsFloat64, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Float64}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsString(
+#        const blpapi_Element_t *element,
+#        const char **buffer,
+#        size_t index);
+function blpapi_Element_getValueAsString(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Cstring}, index::Integer)
+    ccall((:blpapi_Element_getValueAsString, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Cstring}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsDatetime(
+#        const blpapi_Element_t *element,
+#        blpapi_Datetime_t *buffer,
+#        size_t index);
+function blpapi_Element_getValueAsDatetime(element_handle::Ptr{Cvoid}, buffer_ref::Ref{BLPDateTime}, index::Integer)
+    ccall((:blpapi_Element_getValueAsDatetime, libblpapi3), Cint, (Ptr{Cvoid}, Ref{BLPDateTime}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsHighPrecisionDatetime(
+#        const blpapi_Element_t *element,
+#        blpapi_HighPrecisionDatetime_t *buffer,
+#        size_t index);
+
+#int blpapi_Element_getValueAsElement(
+#        const blpapi_Element_t *element,
+#        blpapi_Element_t **buffer,
+#        size_t index);
+function blpapi_Element_getValueAsElement(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Ptr{Cvoid}}, index::Integer)
+    ccall((:blpapi_Element_getValueAsElement, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Csize_t), element_handle, buffer_ref, index)
+end
+
+#int blpapi_Element_getValueAsName(
+#        const blpapi_Element_t *element,
+#        blpapi_Name_t **buffer,
+#        size_t index);
+
+#
+# blpapi_event.h
+#
+
+#int blpapi_Event_eventType(
+#        const blpapi_Event_t *event);
+function blpapi_Event_eventType(event_handle::Ptr{Cvoid})
+    ccall((:blpapi_Event_eventType, libblpapi3), Cint, (Ptr{Cvoid},), event_handle)
+end
+
+#int blpapi_Event_release(
+#        const blpapi_Event_t *event);
+function blpapi_Event_release(event_handle::Ptr{Cvoid})
+    ccall((:blpapi_Event_release, libblpapi3), Cint, (Ptr{Cvoid},), event_handle)
+end
+
+#void blpapi_MessageIterator_destroy(
+#        blpapi_MessageIterator_t* iterator);
+function blpapi_MessageIterator_destroy(msg_iterator_handle::Ptr{Cvoid})
+    ccall((:blpapi_MessageIterator_destroy, libblpapi3), Cvoid, (Ptr{Cvoid},), msg_iterator_handle)
+end
+
+#blpapi_MessageIterator_t* blpapi_MessageIterator_create(
+#        const blpapi_Event_t *event);
+function blpapi_MessageIterator_create(event_handle::Ptr{Cvoid})
+    ccall((:blpapi_MessageIterator_create, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), event_handle)
+end
+
+#int blpapi_MessageIterator_next(
+#        blpapi_MessageIterator_t* iterator,
+#        blpapi_Message_t** result);
+function blpapi_MessageIterator_next(msg_iter_handle::Ptr{Cvoid}, result_msg_handle_ref::Ref{Ptr{Cvoid}})
+    ccall((:blpapi_MessageIterator_next, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}), msg_iter_handle, result_msg_handle_ref)
+end
+
+#
+# blpapi_message.h
+#
+
+#blpapi_Element_t* blpapi_Message_elements(
+#        const blpapi_Message_t *message);
+function blpapi_Message_elements(message_handle::Ptr{Cvoid})
+    ccall((:blpapi_Message_elements, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), message_handle)
+end
+
+#int blpapi_Message_numCorrelationIds(
+#        const blpapi_Message_t *message);
+function blpapi_Message_numCorrelationIds(message_handle::Ptr{Cvoid})
+    ccall((:blpapi_Message_numCorrelationIds, libblpapi3), Cint, (Ptr{Cvoid},), message_handle)
+end
+
+#blpapi_CorrelationId_t blpapi_Message_correlationId(
+#        const blpapi_Message_t *message,
+#        size_t index);
+function blpapi_Message_correlationId(message_handle::Ptr{Cvoid}, index::Integer)
+    ccall((:blpapi_Message_correlationId, libblpapi3), CorrelationId, (Ptr{Cvoid}, Csize_t), message_handle, index)
 end

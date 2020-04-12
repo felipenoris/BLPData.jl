@@ -45,6 +45,18 @@ get_server_host(opt::SessionOptions) = unsafe_string(blpapi_SessionOptions_serve
 get_server_port(opt::SessionOptions) = blpapi_SessionOptions_serverPort(opt.handle)
 get_client_mode(opt::SessionOptions) = ClientMode(blpapi_SessionOptions_clientMode(opt.handle))
 
+const DEFAULT_SERVICE_NAMES = Set(["//blp/mktdata", "//blp/refdata"])
+
+function service_name_str(service_name::AbstractString)
+    @assert length(service_name) >= 2 "Short service name `$(service_name)`"
+
+    if !(service_name[1] == '/' && service_name[2] == '/')
+        return "//blp/$service_name"
+    else
+        return service_name
+    end
+end
+
 """
     Session(services...;
             host=nothing,
@@ -72,7 +84,7 @@ customized_session = Blpapi.Session("//blp/refdata",
     client_mode=Blpapi.BLPAPI_CLIENTMODE_DAPI)
 ```
 """
-function Session(services::Set{String};
+function Session(services::Set{String}=DEFAULT_SERVICE_NAMES;
             host=nothing,
             port=nothing,
             client_mode=nothing,
@@ -93,7 +105,7 @@ function Session(services::Set{String};
     opened_services = Set{String}()
 
     for service_name in services
-        @assert isa(service_name, AbstractString)
+        service_name = service_name_str(service_name)
 
         # opens the service
         err = blpapi_Session_openService(handle, service_name)
@@ -119,4 +131,11 @@ it can only be destroyed.
 function stop(session::Session)
     err = blpapi_Session_stop(session.handle)
     error_check(err, "Failed to stop session")
+end
+
+function next_event(session::Session; timeout_milliseconds::UInt32=UInt32(0)) :: Event
+    event_handle_ref = Ref{Ptr{Cvoid}}(C_NULL)
+    err = blpapi_Session_nextEvent(session.handle, event_handle_ref, timeout_milliseconds)
+    error_check(err, "Failed to get next event from session")
+    return Event(event_handle_ref[])
 end

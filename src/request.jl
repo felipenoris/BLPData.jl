@@ -20,7 +20,7 @@ function Base.setindex!(request::Request, val, element_name::AbstractString)
     elements[element_name] = val
 end
 
-function send(request::Request) :: CorrelationId
+function send_request(request::Request) :: CorrelationId
     correlation_id_ref = Ref(CorrelationId())
     session = request.service.session
     err = blpapi_Session_sendRequest(session.handle, request.handle, correlation_id_ref)
