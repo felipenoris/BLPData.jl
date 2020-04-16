@@ -1,0 +1,8 @@
+[blpapi]
+arch = "x86_64"
+git-tree-sha1 = "5c366268f16c55e522bad96ae446ba619b904c0c"
+os = "windows"
+
+    [[blpapi.download]]
+    sha256 = "e5e0c05400d5f6e6c06b28db9e19e74436467381b8229b4197fcedae8688d91c"
+    url = "https://github.com/felipenoris/BLP.jl/releases/download/blpapi-3.12.3.1/blpapi_cpp_3.12.3.1-windows-x64.tar.gz"
