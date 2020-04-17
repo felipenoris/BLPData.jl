@@ -1,1 +1,73 @@
+
 # BLP.jl
+
+
+[![License][license-img]](LICENSE)
+[![appveyor][appveyor-img]][appveyor-url]
+
+[license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
+[appveyor-img]: https://img.shields.io/appveyor/ci/felipenoris/blp-jl/master.svg?logo=appveyor&label=Windows&style=flat-square
+[appveyor-url]: https://ci.appveyor.com/project/felipenoris/blp-jl/branch/master
+
+Provides a wrapper for [BLPAPI Library](https://www.bloomberg.com/professional/support/api-library/) to the Julia language.
+
+The BLPAPI is the API Library provided by [Bloomberg L.P.](https://www.bloomberg.com/)
+to connect to Bloomberg Professional Services.
+
+This package aims to wrap each BLPAPI "Class" into an equivalent Julia type.
+Using this approach, the user can implement any query that BLPAPI provides
+and also inspect message schemas to discover what requests and responses are
+available from the API.
+
+## Requirements
+
+* Julia v1.3 or newer.
+
+* Windows only.
+
+## Example
+
+```julia
+julia> using BLP, Dates, DataFrames
+
+julia> session = BLP.Session()
+Session services available: Set(["//blp/refdata", "//blp/mktdata"])
+
+julia> DataFrame( BLP.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10) ))
+7×3 DataFrame
+│ Row │ date       │ PX_LAST │ VOLUME    │
+│     │ Date       │ Float64 │ Float64   │
+├─────┼────────────┼─────────┼───────────┤
+│ 1   │ 2020-01-02 │ 30.7    │ 3.77745e7 │
+│ 2   │ 2020-01-03 │ 30.45   │ 7.15956e7 │
+│ 3   │ 2020-01-06 │ 30.81   │ 8.1844e7  │
+│ 4   │ 2020-01-07 │ 30.69   │ 3.2822e7  │
+│ 5   │ 2020-01-08 │ 30.5    │ 4.82156e7 │
+│ 6   │ 2020-01-09 │ 30.4    │ 3.61027e7 │
+│ 7   │ 2020-01-10 │ 30.27   │ 2.53975e7 │
+
+julia> BLP.stop(session)
+
+```
+
+## Development Notice
+
+This package is at an early stage with active development.
+
+Expect *breaking changes* without notice until it reaches version `v0.1`.
+
+## Alternative Libraries
+
+* [Bloomie.jl](https://github.com/ungil/Bloomie.jl)
+
+* [BLPAPI.jl by JuliaComputing](https://juliacomputing.com/products/juliapro#premium-pkgs-1)
+
+## References
+
+* [BLPAPI Library](https://www.bloomberg.com/professional/support/api-library/)
+
+* [Rblpapi for R](https://github.com/Rblp/Rblpapi)
+
+## Notice
+
+*BLOOMBERG and BLOOMBERG PROFESSIONAL are trademarks and service marks of Bloomberg Finance L.P., a Delaware limited partnership, or its subsidiaries. All rights reserved.*

@@ -1,4 +1,8 @@
 
+function Base.show(io::IO, s::Session)
+    print(io, "Session services available: $(s.opened_services)")
+end
+
 # Operation is always top level
 function Base.show(io::IO, op::Operation)
     println(io, "Operation: $(op.name)")
