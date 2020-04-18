@@ -40,6 +40,13 @@ function has_operation(service::Service, name::AbstractString) :: Bool
     return err == 0
 end
 
+"""
+    list_operation_names(service::Service) :: Vector{String}
+
+List operation names available for `service`.
+
+See also [`get_operation`](@ref).
+"""
 function list_operation_names(service::Service) :: Vector{String}
     num_operations = get_num_operations(service)
 
@@ -95,3 +102,5 @@ function Operation(op_handle::Ptr{Cvoid})
             _response_definitions(op_handle)
         )
 end
+
+Base.getindex(service::Service, operation_name::AbstractString) = get_operation(service, operation_name)

@@ -141,7 +141,7 @@ end
 #        blpapi_Session_t* session,
 #        blpapi_Event_t **eventPointer,
 #        unsigned int timeoutInMilliseconds);
-function blpapi_Session_nextEvent(session_handle::Ptr{Cvoid}, event_handle_ref::Ref{Ptr{Cvoid}}, timeout::UInt32)
+function blpapi_Session_nextEvent(session_handle::Ptr{Cvoid}, event_handle_ref::Ref{Ptr{Cvoid}}, timeout::Integer)
     ccall((:blpapi_Session_nextEvent, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, UInt32), session_handle, event_handle_ref, timeout)
 end
 

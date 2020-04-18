@@ -3,6 +3,10 @@ function Base.show(io::IO, s::Session)
     print(io, "Session services available: $(s.opened_services)")
 end
 
+function Base.show(io::IO, s::Service)
+    print(io, "Service(\"$(s.name)\")")
+end
+
 # Operation is always top level
 function Base.show(io::IO, op::Operation)
     println(io, "Operation: $(op.name)")
@@ -72,7 +76,7 @@ function sep(io::IO)
     println(io)
 end
 
-Base.show(io::IO, blpname::BLPName) = show(io, blpname.symbol)
+Base.show(io::IO, blpname::BLPName) = print(io, "BLPName(\"$(blpname.symbol)\")")
 
 function print_schema_tree(io::IO, list::BLPConstantList, prefix="")
     println(io, "$(prefix)Enumeration $(list.name) - $(list.description) - $(list.status) - $(list.datatype)")

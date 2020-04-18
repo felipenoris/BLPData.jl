@@ -11,7 +11,7 @@ end
 SESSION = BLP.Session()
 
 @testset "Service" begin
-    service = BLP.Service(SESSION, "refdata")
+    service = SESSION["refdata"]
 
     println("operation names for $(service.name)")
     println(BLP.list_operation_names(service))
@@ -20,26 +20,52 @@ SESSION = BLP.Session()
     @test !BLP.has_operation(service, "HistoricalDatarequest")
 
     @testset "HistoricalDataRequest" begin
-        op = BLP.get_operation(service, "HistoricalDataRequest")
+        op = service["HistoricalDataRequest"]
         @test op.name == "HistoricalDataRequest"
         println(op)
     end
 end
 
+@testset "generic request/response" begin
+    security = "PETR4 BS Equity"
+    fields = [ "PX_LAST", "VOLUME" ]
+    date_start = Date(2020, 4, 1)
+    date_end = Date(2020, 4, 16)
+
+    corr_id = BLP.send_request(SESSION, "refdata", "HistoricalDataRequest") do req
+        push!(req["securities"], security)
+        append!(req["fields"], fields)
+        req["startDate"] = date_start
+        req["endDate"] = date_end
+    end
+
+    resp = BLP.parse_response_as(Dict, SESSION, corr_id)
+    @test haskey(resp[1], :securityData)
+    @test haskey(resp[1][:securityData], :fieldData)
+    field_data = resp[1][:securityData][:fieldData]
+    @test haskey(field_data[1], :PX_LAST)
+    @test isa(field_data[1][:PX_LAST], Number)
+    println(resp)
+end
+
 @testset "bdh" begin
     @time result = BLP.bdh(SESSION, "IBM US Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
     df = DataFrame(result)
+    @test DataFrames.names(df) == [ :date, :PX_LAST, :VWAP_VOLUME ]
+    @test size(df) == (20, 3)
     show(df)
 
     @testset "periodicity" begin
-        x = BLP.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), periodicity="YEARLY")
-        @test length(x) == 2
+        df = DataFrame(BLP.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), periodicity="YEARLY"))
+        @test DataFrames.names(df) == [ :date, :PX_LAST ]
+        @test size(df) == (2, 2)
     end
 
     @testset "options" begin
         options = Dict("periodicitySelection" => "YEARLY", "periodicityAdjustment" => "CALENDAR")
-        x = BLP.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), options=options)
-        @test length(x) == 2
+        df = DataFrame(BLP.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), options=options))
+        @test DataFrames.names(df) == [ :date, :PX_LAST ]
+        @test size(df) == (2, 2)
     end
 
     @testset "historical price" begin
@@ -58,8 +84,10 @@ end
             "adjustmentSplit" => false
         )
 
-        x = BLP.bdh(SESSION, ticker, fields, Date(2019, 1, 1), Date(2019, 2, 10), options=options)
-        println(DataFrame(x))
+        df = DataFrame(BLP.bdh(SESSION, ticker, fields, Date(2019, 1, 1), Date(2019, 2, 10), options=options))
+        @test DataFrames.names(df) == [ :date, :PX_LAST, :TURNOVER, :PX_BID, :PX_ASK, :EQY_WEIGHTED_AVG_PX, :EXCHANGE_VWAP ]
+        @test size(df) == (27, 7)
+        show(df)
     end
 
     @testset "adjusted price" begin
@@ -78,8 +106,10 @@ end
             "adjustmentSplit" => true
         )
 
-        x = BLP.bdh(SESSION, ticker, field, Date(2019, 1, 1), Date(2019, 2, 10), options=options)
-        println(DataFrame(x))
+        df = DataFrame(BLP.bdh(SESSION, ticker, field, Date(2019, 1, 1), Date(2019, 2, 10), options=options))
+        @test DataFrames.names(df) == [ :date, :PX_LAST ]
+        @test size(df) == (27, 2)
+        show(df)
     end
 end
 

@@ -341,3 +341,44 @@ function is_null_element(element::AbstractElement)
     rc = blpapi_Element_isNull(element.handle)
     return rc != 0
 end
+
+function as_dict!(dict::Dict, root::Element{A,D}) where {A,D}
+
+    if is_choice_datatype(D)
+        as_dict!(dict, get_choice(root))
+
+    elseif D == BLPAPI_DATATYPE_SEQUENCE
+
+        # vector of sequences
+        if A
+            elements_vec = Vector()
+            dict[root.name.symbol] = elements_vec
+            for el in get_element_value(root)
+                el_dict = Dict()
+                as_dict!(el_dict, el)
+                if length(el_dict) == 1 && haskey(el_dict, root.name.symbol)
+                    push!(elements_vec, el_dict[root.name.symbol])
+                else
+                    push!(elements_vec, el_dict)
+                end
+            end
+        else
+            # a single sequence
+            child_dict = Dict()
+            dict[root.name.symbol] = child_dict
+            for child_element in each_child_element(root)
+                as_dict!(child_dict, child_element)
+            end
+        end
+
+    else
+        @assert is_simple_datatype(D)
+        dict[root.name.symbol] = get_element_value(root)
+    end
+end
+
+function Base.Dict(element::AbstractElement)
+    dict = Dict()
+    as_dict!(dict, element)
+    return dict
+end
