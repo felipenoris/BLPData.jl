@@ -133,9 +133,11 @@ function stop(session::Session)
     error_check(err, "Failed to stop session")
 end
 
-function next_event(session::Session; timeout_milliseconds::UInt32=UInt32(0)) :: Event
+function next_event(session::Session; timeout_milliseconds::Integer=UInt32(0)) :: Event
     event_handle_ref = Ref{Ptr{Cvoid}}(C_NULL)
     err = blpapi_Session_nextEvent(session.handle, event_handle_ref, timeout_milliseconds)
     error_check(err, "Failed to get next event from session")
     return Event(event_handle_ref[])
 end
+
+Base.getindex(session::Session, service_name::AbstractString) = Service(session, service_name)
