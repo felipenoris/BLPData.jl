@@ -1,13 +1,12 @@
 
-# BLP.jl
-
+# BLPData.jl
 
 [![License][license-img]](LICENSE)
 [![appveyor][appveyor-img]][appveyor-url]
 
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[appveyor-img]: https://img.shields.io/appveyor/ci/felipenoris/blp-jl/master.svg?logo=appveyor&label=Windows&style=flat-square
-[appveyor-url]: https://ci.appveyor.com/project/felipenoris/blp-jl/branch/master
+[appveyor-img]: https://img.shields.io/appveyor/ci/felipenoris/blpdata-jl/master.svg?logo=appveyor&label=Windows&style=flat-square
+[appveyor-url]: https://ci.appveyor.com/project/felipenoris/blpdata-jl/branch/master
 
 Provides a wrapper for [BLPAPI Library](https://www.bloomberg.com/professional/support/api-library/) to the Julia language.
 
@@ -28,12 +27,12 @@ available from the API.
 ## Example
 
 ```julia
-julia> using BLP, Dates, DataFrames
+julia> using BLPData, Dates, DataFrames
 
-julia> session = BLP.Session()
+julia> session = BLPData.Session()
 Session services available: Set(["//blp/refdata", "//blp/mktdata"])
 
-julia> DataFrame( BLP.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10) ))
+julia> DataFrame( BLPData.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10) ))
 7×3 DataFrame
 │ Row │ date       │ PX_LAST │ VOLUME    │
 │     │ Date       │ Float64 │ Float64   │
@@ -46,8 +45,17 @@ julia> DataFrame( BLP.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"], Dat
 │ 6   │ 2020-01-09 │ 30.4    │ 3.61027e7 │
 │ 7   │ 2020-01-10 │ 30.27   │ 2.53975e7 │
 
-julia> BLP.stop(session)
+julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
+4×1 DataFrame
+│ Row │ Address                      │
+│     │ String                       │
+├─────┼──────────────────────────────┤
+│ 1   │ Av Republica do Chile 65     │
+│ 2   │ Centro                       │
+│ 3   │ Rio De Janeiro, RJ 20035-900 │
+│ 4   │ Brazil                       │
 
+julia> BLPData.stop(session)
 ```
 
 ## Development Notice
