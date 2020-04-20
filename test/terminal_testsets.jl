@@ -113,6 +113,20 @@ end
     end
 end
 
+@testset "bds" begin
+
+    @testset "COMPANY_ADDRESS" begin
+        df = DataFrame(BLP.bds(SESSION, "PETR4 BS Equity", "COMPANY_ADDRESS"))
+        @test DataFrames.names(df) == [:Address]
+        @test df[end, :Address] == "Brazil"
+    end
+
+    @testset "DVD_HIST_GROSS_WITH_AMT_STAT" begin
+        df = DataFrame(BLP.bds(SESSION, "PETR4 BS Equity", "DVD_HIST_GROSS_WITH_AMT_STAT"))
+        @test DataFrames.names(df) == [ Symbol("Declared Date"), Symbol("Ex-Date"), Symbol("Record Date"), Symbol("Payable Date"), Symbol("Dividend Amount"), Symbol("Dividend Frequency"), Symbol("Dividend Type"), Symbol("Amount Status") ]
+    end
+end
+
 @testset "benchmarks" begin
     @time result = BLP.bdh(SESSION, "PETR4 BS Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
 end

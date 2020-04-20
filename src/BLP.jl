@@ -18,6 +18,7 @@ include("request.jl")
 include("message.jl")
 include("print.jl")
 include("bdh.jl")
+include("bds.jl")
 
 function __init__()
     check_deps()
