@@ -12,7 +12,7 @@ end
 
 # const char* blpapi_getLastErrorDescription(int resultCode);
 function blpapi_getLastErrorDescription(resultCode::Cint) :: String
-    unsafe_string(ccall((:blpapi_getLastErrorDescription, :blpapi3_64), Cstring, (Cint,), resultCode))
+    unsafe_string(ccall((:blpapi_getLastErrorDescription, libblpapi3), Cstring, (Cint,), resultCode))
 end
 
 #

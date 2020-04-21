@@ -1,2 +1,5 @@
 Manifest.toml
-deps
+.DS_Store
+contrib/*.dll
+contrib/*.so
+contrib/*.tar.gz

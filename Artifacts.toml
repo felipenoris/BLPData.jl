@@ -1,4 +1,4 @@
-[blpapi]
+[[blpapi]]
 arch = "x86_64"
 git-tree-sha1 = "5c366268f16c55e522bad96ae446ba619b904c0c"
 os = "windows"
@@ -6,3 +6,21 @@ os = "windows"
     [[blpapi.download]]
     sha256 = "e5e0c05400d5f6e6c06b28db9e19e74436467381b8229b4197fcedae8688d91c"
     url = "https://github.com/felipenoris/BLPData.jl/releases/download/blpapi-3.12.3.1/blpapi_cpp_3.12.3.1-windows-x64.tar.gz"
+
+[[blpapi]]
+arch = "x86_64"
+git-tree-sha1 = "466a3549ef4b08856ac630f2b792b472170ff4b0"
+os = "linux"
+
+    [[blpapi.download]]
+    sha256 = "a07da9a022bc2aea3cab90801508608f2767d3d8f0790d43ce28933b04d8a3c6"
+    url = "https://github.com/felipenoris/BLPData.jl/releases/download/blpapi-3.12.3.1/blpapi_cpp_3.12.3.1-linux-x64.tar.gz"
+
+[[blpapi]]
+arch = "x86_64"
+git-tree-sha1 = "2efdd93e172b25ccb55877c2006e1dbe8790b5a4"
+os = "macos"
+
+    [[blpapi.download]]
+    sha256 = "5a2bbd14da0e46f6aed8c02da5c4917baa1fffa958ebb0d2c02e22ddab4fa222"
+    url = "https://github.com/felipenoris/BLPData.jl/releases/download/blpapi-3.12.3.1/blpapi_cpp_3.14.3.1-macos-x64.tar.gz"
