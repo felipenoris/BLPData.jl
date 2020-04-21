@@ -13,9 +13,9 @@ available from the API.
 
 ## Requirements
 
-* Julia v1.0
+* Julia v1.3 or newer.
 
-* Windows or Linux.
+* Windows, Linux or macOS.
 
 ## Installation
 
