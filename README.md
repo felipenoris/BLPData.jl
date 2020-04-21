@@ -3,10 +3,13 @@
 
 [![License][license-img]](LICENSE)
 [![appveyor][appveyor-img]][appveyor-url]
+[![travis][travis-img]][travis-url]
 
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
 [appveyor-img]: https://img.shields.io/appveyor/ci/felipenoris/blpdata-jl/master.svg?logo=appveyor&label=Windows&style=flat-square
 [appveyor-url]: https://ci.appveyor.com/project/felipenoris/blpdata-jl/branch/master
+[travis-img]: https://img.shields.io/travis/felipenoris/BLPData.jl/master.svg?logo=travis&label=macOS&style=flat-square
+[travis-url]: https://travis-ci.org/felipenoris/BLPData.jl
 
 Provides a wrapper for [BLPAPI Library](https://www.bloomberg.com/professional/support/api-library/) to the Julia language.
 
@@ -22,7 +25,7 @@ available from the API.
 
 * Julia v1.3 or newer.
 
-* Windows only.
+* Windows, Linux or macOS.
 
 ## Example
 

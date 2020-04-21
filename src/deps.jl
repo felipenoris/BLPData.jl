@@ -16,22 +16,47 @@ libblpapi3_path = "" # global var with path to the shared library
 const libblpapi3 = shared_lib_filename()
 libblpapi3_handle = C_NULL # global var to be set at __init__() -> check_deps()
 
-# called by __init__()
-function check_deps()
-
+function get_artifact_dir()
     #artifact_dir = abspath(artifact"blpapi") # didn't work
     artifacts_toml = joinpath(@__DIR__, "..", "Artifacts.toml")
     @assert isfile(artifacts_toml) "Couldn't find $artifacts_toml"
     artifact_dict = Pkg.Artifacts.load_artifacts_toml(artifacts_toml)
     artifact_dir = Pkg.Artifacts.do_artifact_str("blpapi", artifact_dict, artifacts_toml, @__MODULE__)
+end
 
-    global libblpapi3_path = joinpath(artifact_dir, libblpapi3)
-    if !isfile(libblpapi3_path)
-        error("Couldn't find shared library artifact at $libblpapi3_path.")
-    end
+get_libblpapi_artifact_filepath() = joinpath(get_artifact_dir(), libblpapi3)
 
-    global libblpapi3_handle = dlopen(libblpapi3_path)
-    if libblpapi3_handle == C_NULL
-        error("$libblpapi3_path cannot be opened.")
+# called by __init__()
+function check_deps()
+
+    global libblpapi3_path
+    global libblpapi3_handle
+
+    if Sys.islinux()
+
+        try
+            libblpapi3_handle = dlopen(libblpapi3)
+        catch err
+            if isa(err, ErrorException) && endswith(err.msg, "$libblpapi3: cannot open shared object file: No such file or directory")
+                error("Couldn't find $libblpapi3 shared lib. Copy the file $(get_libblpapi_artifact_filepath()) to your `LD_LIBRARY_PATH` and restart Julia.")
+            else
+                rethrow(err)
+            end
+        end
+
+        if libblpapi3_handle == C_NULL
+            error("$libblpapi3 cannot be opened.")
+        end
+    else
+
+        libblpapi3_path = get_libblpapi_artifact_filepath()
+        if !isfile(libblpapi3_path)
+            error("Couldn't find shared library artifact at $libblpapi3_path.")
+        end
+
+        libblpapi3_handle = dlopen(libblpapi3_path)
+        if libblpapi3_handle == C_NULL
+            error("$libblpapi3_path cannot be opened.")
+        end
     end
 end
