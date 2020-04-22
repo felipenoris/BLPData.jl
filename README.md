@@ -43,6 +43,10 @@ julia> using Pkg
 julia> Pkg.add("BLPData")
 ```
 
+## Documentation
+
+Package documentation is hosted at https://felipenoris.github.io/BLPData.jl/stable.
+
 ## Example
 
 ```julia
@@ -95,6 +99,12 @@ Expect *breaking changes* without notice until it reaches version `v0.1`.
 
 * [Rblpapi for R](https://github.com/Rblp/Rblpapi)
 
-## Notice
+## License
+
+The source code for the package **BLPData.jl** is licensed under
+the [MIT License](https://raw.githubusercontent.com/felipenoris/BLPData.jl/master/LICENSE).
+
+The **BLPData.jl** package uses and distributes binary files released by Bloomberg Finance L.P.
+under the licensing terms included in the file [`LICENSE.blpapi`](https://github.com/felipenoris/BLPData.jl/blob/master/LICENSE.blpapi).
 
 *BLOOMBERG and BLOOMBERG PROFESSIONAL are trademarks and service marks of Bloomberg Finance L.P., a Delaware limited partnership, or its subsidiaries. All rights reserved.*

@@ -1,4 +1,25 @@
 
+"""
+    bds(session::Session, security::AbstractString, field::AbstractString;
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
+
+Runs a query for reference data of a security. Returns a `Vector` of named tuples.
+
+Internally, it issues a `ReferenceDataRequest` in `//blp/refdata` service.
+
+See also [`bdh`](@ref).
+
+# Example
+
+```julia
+using BLPData, DataFrames
+session = BLPData.Session()
+result = BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS")
+df = DataFrame(result)
+```
+"""
 function bds(session::Session, security::AbstractString, field::AbstractString;
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,

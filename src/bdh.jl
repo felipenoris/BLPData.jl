@@ -6,6 +6,64 @@ function bdh(session::Session, security::AbstractString, field::AbstractString, 
     bdh(session, security, [field], date_start, date_end, periodicity=periodicity, options=options)
 end
 
+"""
+    bdh(session::Session, security::AbstractString, fields, date_start::Date, date_end::Date;
+            periodicity=nothing, # periodicitySelection option
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
+
+Runs a query for historical data. Returns a `Vector` of named tuples.
+
+Internally, it issues a `HistoricalDataRequest` in `//blp/refdata` service.
+
+See also [`bds`](@ref).
+
+# Arguments
+
+* `fields` is either a single string or an array of string values.
+
+* `options` argument expects a key->value pairs or a `Dict`.
+
+* `periodicity` expects the string value for the `periodicitySelection` option.
+
+# Simple query example
+
+```julia
+using BLPData, DataFrames, Dates
+
+# opens a session
+session = BLPData.Session()
+
+# query historical data
+result = BLPData.bdh(session, "IBM US Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
+
+# format result as a `DataFrame`
+df = DataFrame(result)
+```
+
+# Query with optional parameters
+
+```julia
+ticker = "PETR4 BS Equity"
+field = "PX_LAST"
+options = Dict(
+    "periodicityAdjustment" => "CALENDAR",
+    "periodicitySelection" => "DAILY",
+    "currency" => "BRL",
+    "pricingOption" => "PRICING_OPTION_PRICE",
+    "nonTradingDayFillOption" => "ACTIVE_DAYS_ONLY",
+    "nonTradingDayFillMethod" => "NIL_VALUE",
+    "adjustmentFollowDPDF" => false,
+    "adjustmentNormal" => true,
+    "adjustmentAbnormal" => true,
+    "adjustmentSplit" => true
+)
+
+# query for adjusted stock price
+df = DataFrame(BLPData.bdh(session, ticker, field, Date(2019, 1, 1), Date(2019, 2, 10), options=options))
+```
+"""
 function bdh(session::Session, security::AbstractString, fields::Vector{T}, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict

@@ -75,7 +75,8 @@ See also [`stop`](@ref), [`ClientMode`](@ref).
 # starts a session with default parameters:
 # * host=127.0.0.1, port=8194
 # * client_mode = BLPAPI_CLIENTMODE_AUTO.
-session = Blpapi.Session("//blp/mktdata", "//blp/refdata")
+# * services = BLPData.DEFAULT_SERVICE_NAMES
+session = Blpapi.Session()
 
 # session with customized parameters
 customized_session = Blpapi.Session("//blp/refdata",
