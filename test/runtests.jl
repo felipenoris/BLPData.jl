@@ -2,7 +2,7 @@
 using Test, Dates, DataFrames
 import BLPData
 
-if Sys.islinux() && if haskey(ENV, "SKIP_LINUX_TESTS")
+if Sys.islinux() && haskey(ENV, "SKIP_LINUX_TESTS")
     @warn("Skipping tests for Linux.")
     return
 end
