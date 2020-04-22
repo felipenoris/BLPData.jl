@@ -38,7 +38,8 @@ function check_deps()
             libblpapi3_handle = dlopen(libblpapi3)
         catch err
             if isa(err, ErrorException) && endswith(err.msg, "$libblpapi3: cannot open shared object file: No such file or directory")
-                error("Couldn't find $libblpapi3 shared lib. Copy the file $(get_libblpapi_artifact_filepath()) to your `LD_LIBRARY_PATH` and restart Julia.")
+                @warn("### WARNING ### \nCouldn't find $libblpapi3 shared lib.\nCopy the file $(get_libblpapi_artifact_filepath()) to your `LD_LIBRARY_PATH` and restart Julia.")
+                return
             else
                 rethrow(err)
             end

@@ -81,12 +81,6 @@ julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
 julia> BLPData.stop(session)
 ```
 
-## Development Notice
-
-This package is at an early stage with active development.
-
-Expect *breaking changes* without notice until it reaches version `v0.1`.
-
 ## Alternative Libraries
 
 * [Bloomie.jl](https://github.com/ungil/Bloomie.jl)

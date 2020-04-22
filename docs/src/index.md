@@ -74,12 +74,6 @@ Contributions are always welcome!
 To contribute, fork the project on [GitHub](https://github.com/felipenoris/BLPData.jl)
 and send a Pull Request.
 
-## Development Notice
-
-This package is at an early stage with active development.
-
-Expect *breaking changes* without notice until it reaches version `v0.1`.
-
 ## Alternative Libraries
 
 * [Bloomie.jl](https://github.com/ungil/Bloomie.jl)

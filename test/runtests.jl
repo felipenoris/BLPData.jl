@@ -2,6 +2,11 @@
 using Test, Dates, DataFrames
 import BLPData
 
+if Sys.islinux() && if haskey(ENV, "SKIP_LINUX_TESTS")
+    @warn("Skipping tests for Linux.")
+    return
+end
+
 @testset "Error Codes" begin
     error_string = BLPData.blpapi_getLastErrorDescription(Int32(1))
     @test error_string == "BLPAPI_ERROR_UNKNOWN"
@@ -60,7 +65,7 @@ end
 end
 
 if haskey(ENV, "NO_BLP_SERVICE")
-    @info("NO_BLP_SERVICE env variable is set. Skipping Terminal tests sets.")
+    @info("NO_BLP_SERVICE env variable is set. Skipping Terminal tests.")
 else
     include("terminal_testsets.jl")
 end
