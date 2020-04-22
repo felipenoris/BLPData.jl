@@ -4,7 +4,7 @@ import BLPData
 
 if Sys.islinux() && haskey(ENV, "SKIP_LINUX_TESTS")
     @warn("Skipping tests for Linux.")
-    return
+    exit()
 end
 
 @testset "Error Codes" begin
