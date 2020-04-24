@@ -416,3 +416,31 @@ function destroy!(msg_iter::MessageIterator)
     end
     nothing
 end
+
+"""
+An `EventQueue` can be used in `send_request`.
+The application can then handle responses
+in an async fashion as they arrive, or
+handle all responses synchronously.
+
+Use `EventQueue()` to create a new queue.
+"""
+mutable struct EventQueue
+    handle::Ptr{Cvoid}
+
+    function EventQueue(handle::Ptr{Cvoid})
+        ptr_check(handle, "Failed to create EventQueue")
+        new_event_queue = new(handle)
+        finalizer(destroy!, new_event_queue)
+        return new_event_queue
+    end
+end
+
+function destroy!(queue::EventQueue)
+    if queue.handle != C_NULL
+        err = blpapi_EventQueue_destroy(queue.handle)
+        error_check(err, "Failed to destroy EventQueue")
+        queue.handle = C_NULL
+    end
+    nothing
+end

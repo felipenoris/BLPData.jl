@@ -22,15 +22,15 @@ function Base.setindex!(request::Request, val, element_name::AbstractString)
     elements[element_name] = val
 end
 
-function send_request(request::Request) :: CorrelationId
+function send_request(request::Request, queue::EventQueue=EventQueue()) :: Tuple{EventQueue, CorrelationId}
     correlation_id_ref = Ref(CorrelationId())
     session = request.service.session
-    err = blpapi_Session_sendRequest(session.handle, request.handle, correlation_id_ref)
+    err = blpapi_Session_sendRequest(session.handle, request.handle, correlation_id_ref, queue.handle)
     error_check(err, "Failed to send request")
-    return correlation_id_ref[]
+    return queue, correlation_id_ref[]
 end
 
-function send_request(f::Function, session::Session, service_name::AbstractString, operation_name::AbstractString) :: CorrelationId
+function send_request(f::Function, session::Session, service_name::AbstractString, operation_name::AbstractString, queue::EventQueue=EventQueue()) :: Tuple{EventQueue, CorrelationId}
     request = Request(session, service_name, operation_name)
 
     # inspect result schema
@@ -38,37 +38,47 @@ function send_request(f::Function, session::Session, service_name::AbstractStrin
     # elements_schema = BLP.SchemaElementDefinition(elements)
 
     f(request)
-    return send_request(request)
+    return send_request(request, queue)
 end
 
-function for_each_response_message_element(f::Function, session::Session, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false)
+function for_each_response_message_element(f::Function, queue::EventQueue, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false, async::Bool=false)
+
+    local response_event::Event
+
     while true
-        response_event = next_event(session, timeout_milliseconds=timeout_milliseconds)
+
+        if async
+            response_event = try_next_event(queue)
+
+            if response_event == nothing
+                yield()
+                continue
+            end
+        else
+            response_event = next_event(queue, timeout_milliseconds=timeout_milliseconds)
+        end
 
         if response_event.event_type == BLPAPI_EVENTTYPE_TIMEOUT
             error("Response Timeout.")
 
-        elseif response_event.event_type != BLPAPI_EVENTTYPE_RESPONSE && response_event.event_type != BLPAPI_EVENTTYPE_PARTIAL_RESPONSE
-            verbose && @warn("Ignoring response event $(response_event.event_type)")
-            continue
+        elseif response_event.event_type == BLPAPI_EVENTTYPE_REQUEST_STATUS
+            error("Request Error: $response_event.")
         end
+
+        @assert response_event.event_type == BLPAPI_EVENTTYPE_RESPONSE || response_event.event_type == BLPAPI_EVENTTYPE_PARTIAL_RESPONSE "Tried to handle non-response event of type $(response_event.event_type)."
 
         # process BLPAPI_EVENTTYPE_RESPONSE or BLPAPI_EVENTTYPE_PARTIAL_RESPONSE
         verbose && @info("Reading messages from event $(response_event.event_type)")
         for message in each_message(response_event)
-            if corr_id ∈ message.correlation_ids
-                element = Element(message)
+            @assert corr_id ∈ message.correlation_ids "Got message with unexpected correlation id: $(message.correlation_ids) (expected $corr_id)."
+            element = Element(message)
 
-                if verbose
-                    println("Reponse Element Schema")
-                    println(BLP.SchemaElementDefinition(element))
-                end
-
-                f(Element(message))
-
-            else
-                error("Got message with unexpected correlation id: $corr_id: $message.")
+            if verbose
+                println("Reponse Element Schema")
+                println(BLP.SchemaElementDefinition(element))
             end
+
+            f(Element(message))
         end
 
         # check if response is complete
@@ -82,13 +92,13 @@ function for_each_response_message_element(f::Function, session::Session, corr_i
 end
 
 """
-    parse_response_as(::Type{T}, session::Session, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false) :: Vector{T} where {T}
+    parse_response_as(::Type{T}, queue::EventQueue, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false) :: Vector{T} where {T}
 
 Parses all response messages as `Vector{T}`, applying `T(element)` for each `element` read from the response.
 """
-function parse_response_as(::Type{T}, session::Session, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false) where {T}
+function parse_response_as(::Type{T}, queue::EventQueue, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false) where {T}
     result = Vector{T}()
-    for_each_response_message_element(session, corr_id; timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
+    for_each_response_message_element(queue, corr_id; timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
         push!(result, T(element))
     end
     return result
