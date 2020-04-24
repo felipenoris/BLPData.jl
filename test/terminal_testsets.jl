@@ -32,20 +32,22 @@ end
     date_start = Date(2020, 4, 1)
     date_end = Date(2020, 4, 16)
 
-    corr_id = BLPData.send_request(SESSION, "refdata", "HistoricalDataRequest") do req
+    queue, corr_id = BLPData.send_request(SESSION, "refdata", "HistoricalDataRequest") do req
         push!(req["securities"], security)
         append!(req["fields"], fields)
         req["startDate"] = date_start
         req["endDate"] = date_end
     end
 
-    resp = BLPData.parse_response_as(Dict, SESSION, corr_id)
+    resp = BLPData.parse_response_as(Dict, queue, corr_id)
     @test haskey(resp[1], :securityData)
     @test haskey(resp[1][:securityData], :fieldData)
     field_data = resp[1][:securityData][:fieldData]
     @test haskey(field_data[1], :PX_LAST)
     @test isa(field_data[1][:PX_LAST], Number)
     println(resp)
+
+    BLPData.purge(queue)
 end
 
 @testset "bdh" begin
@@ -119,6 +121,7 @@ end
         df = DataFrame(BLPData.bds(SESSION, "PETR4 BS Equity", "COMPANY_ADDRESS"))
         @test DataFrames.names(df) == [:Address]
         @test df[end, :Address] == "Brazil"
+        show(df)
     end
 
     @testset "DVD_HIST_GROSS_WITH_AMT_STAT" begin

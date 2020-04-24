@@ -133,8 +133,8 @@ end
 #        blpapi_EventQueue_t *eventQueue,
 #        const char *requestLabel,
 #        int requestLabelLen);
-function blpapi_Session_sendRequest(session_handle::Ptr{Cvoid}, request_handle::Ptr{Cvoid}, correlation_ref::Ref{CorrelationId})
-    ccall((:blpapi_Session_sendRequest, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ref{CorrelationId}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Cint), session_handle, request_handle, correlation_ref, C_NULL, C_NULL, C_NULL, 0)
+function blpapi_Session_sendRequest(session_handle::Ptr{Cvoid}, request_handle::Ptr{Cvoid}, correlation_ref::Ref{CorrelationId}, queue_handle::Ptr{Cvoid})
+    ccall((:blpapi_Session_sendRequest, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ref{CorrelationId}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Cint), session_handle, request_handle, correlation_ref, C_NULL, queue_handle, C_NULL, 0)
 end
 
 #int blpapi_Session_nextEvent(
@@ -675,6 +675,35 @@ end
 #        const blpapi_Event_t *event);
 function blpapi_Event_release(event_handle::Ptr{Cvoid})
     ccall((:blpapi_Event_release, libblpapi3), Cint, (Ptr{Cvoid},), event_handle)
+end
+
+#blpapi_EventQueue_t* blpapi_EventQueue_create(void);
+function blpapi_EventQueue_create()
+    ccall((:blpapi_EventQueue_create, libblpapi3), Ptr{Cvoid}, ())
+end
+
+#int blpapi_EventQueue_destroy(blpapi_EventQueue_t* eventQueue);
+function blpapi_EventQueue_destroy(queue_handle::Ptr{Cvoid})
+    ccall((:blpapi_EventQueue_destroy, libblpapi3), Cint, (Ptr{Cvoid},), queue_handle)
+end
+
+#blpapi_Event_t* blpapi_EventQueue_nextEvent(
+#        blpapi_EventQueue_t *eventQueue,
+#        int timeout);
+function blpapi_EventQueue_nextEvent(queue_handle::Ptr{Cvoid}, timeout::Integer)
+    ccall((:blpapi_EventQueue_nextEvent, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), queue_handle, timeout)
+end
+
+#int blpapi_EventQueue_purge(blpapi_EventQueue_t *eventQueue);
+function blpapi_EventQueue_purge(queue_handle::Ptr{Cvoid})
+    ccall((:blpapi_EventQueue_purge, libblpapi3), Cint, (Ptr{Cvoid},), queue_handle)
+end
+
+#int blpapi_EventQueue_tryNextEvent(
+#        blpapi_EventQueue_t *eventQueue,
+#        blpapi_Event_t **eventPointer);
+function blpapi_EventQueue_tryNextEvent(queue_handle::Ptr{Cvoid}, event_handle_ref::Ref{Ptr{Cvoid}})
+    ccall((:blpapi_EventQueue_tryNextEvent, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}), queue_handle, event_handle_ref)
 end
 
 #void blpapi_MessageIterator_destroy(

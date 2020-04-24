@@ -73,7 +73,7 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
 
     @assert !isempty(fields) "Fields vector is empty."
 
-    corr_id = send_request(session, "//blp/refdata", "HistoricalDataRequest") do req
+    queue, corr_id = send_request(session, "//blp/refdata", "HistoricalDataRequest") do req
         push!(req["securities"], security)
         append!(req["fields"], fields)
         req["startDate"] = date_start
@@ -92,7 +92,7 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
     end
 
     result = Vector()
-    for_each_response_message_element(session, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
+    for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
 
         @assert has_name(element, "HistoricalDataResponse")
         response_element = get_choice(element)

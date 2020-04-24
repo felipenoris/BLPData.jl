@@ -26,7 +26,7 @@ function bds(session::Session, security::AbstractString, field::AbstractString;
             timeout_milliseconds::Integer=UInt32(0)
         ) where {T<:AbstractString}
 
-    corr_id = send_request(session, "//blp/refdata", "ReferenceDataRequest") do req
+    queue, corr_id = send_request(session, "//blp/refdata", "ReferenceDataRequest") do req
         push!(req["securities"], security)
         push!(req["fields"], field)
 
@@ -38,7 +38,7 @@ function bds(session::Session, security::AbstractString, field::AbstractString;
     end
 
     result = Vector()
-    for_each_response_message_element(session, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
+    for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
 
         @assert has_name(element, "ReferenceDataResponse")
         response_element = get_choice(element)
