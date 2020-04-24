@@ -92,8 +92,8 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
     end
 
     result = Vector()
-    for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
 
+    for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
         @assert has_name(element, "HistoricalDataResponse")
         response_element = get_choice(element)
 
@@ -106,6 +106,33 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
         field_data_element_array = response_element["fieldData"]
         @assert isa(field_data_element_array, Element{true, BLPAPI_DATATYPE_SEQUENCE})
         push_named_tuples!(result, field_data_element_array)
+    end
+
+    return result
+end
+
+"""
+    bdh(session::Session, securities::Vector{T1}, fields::Vector{T2}, date_start::Date, date_end::Date;
+            periodicity=nothing, # periodicitySelection option
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
+        ) where {T1<:AbstractString, T2<:AbstractString}
+
+Runs a query for historical data.
+Returns a `Dict` where the key is the security name and value is a `Vector` of named tuples.
+"""
+function bdh(session::Session, securities::Vector{T1}, fields::Vector{T2}, date_start::Date, date_end::Date;
+            periodicity=nothing, # periodicitySelection option
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
+        ) where {T1<:AbstractString, T2<:AbstractString}
+
+    result = Dict()
+
+    @sync for security in securities
+        @async result[security] = bdh($session, $security, $fields, $date_start, $date_end, periodicity=$periodicity, options=$options, verbose=$verbose, timeout_milliseconds=$timeout_milliseconds)
     end
 
     return result

@@ -24,7 +24,7 @@ function bds(session::Session, security::AbstractString, field::AbstractString;
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0)
-        ) where {T<:AbstractString}
+        )
 
     queue, corr_id = send_request(session, "//blp/refdata", "ReferenceDataRequest") do req
         push!(req["securities"], security)
@@ -38,8 +38,8 @@ function bds(session::Session, security::AbstractString, field::AbstractString;
     end
 
     result = Vector()
-    for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
 
+    for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
         @assert has_name(element, "ReferenceDataResponse")
         response_element = get_choice(element)
 
@@ -52,6 +52,31 @@ function bds(session::Session, security::AbstractString, field::AbstractString;
             @assert get_element_value(security_data_element["security"]) == security
             push_named_tuples!(result, security_data_element["fieldData"][field])
         end
+    end
+
+    return result
+end
+
+"""
+    bds(session::Session, securities::Vector{T}, field::AbstractString;
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
+        ) where {T<:AbstractString}
+
+Runs a query for reference data of a security.
+Returns a `Dict` where the key is the security name and value is a `Vector` of named tuples.
+"""
+function bds(session::Session, securities::Vector{T}, field::AbstractString;
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
+        ) where {T<:AbstractString}
+
+    result = Dict()
+
+    @sync for security in securities
+        @async result[security] = bds($session, $security, $field, options=$options, verbose=$verbose, timeout_milliseconds=$timeout_milliseconds)
     end
 
     return result

@@ -116,7 +116,6 @@ end
 end
 
 @testset "bds" begin
-
     @testset "COMPANY_ADDRESS" begin
         df = DataFrame(BLPData.bds(SESSION, "PETR4 BS Equity", "COMPANY_ADDRESS"))
         @test DataFrames.names(df) == [:Address]
@@ -131,7 +130,45 @@ end
 end
 
 @testset "benchmarks" begin
-    @time result = BLPData.bdh(SESSION, "PETR4 BS Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
+    @testset "single ticker" begin
+        println("single ticker benchmark")
+        @time result = BLPData.bdh(SESSION, "PETR4 BS Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
+    end
+
+    tickers = [ "PETR4 BS Equity",
+                "PETR3 BS Equity",
+                "VALE3 BS Equity",
+                "BBDC4 BS Equity",
+                "BBDC3 BS Equity",
+                "ITUB4 BS Equity",
+                "B3SA3 BS Equity",
+                "ABEV3 BS Equity",
+                "BBAS3 BS Equity",
+                "ITSA4 BS Equity",
+                "MGLU3 BS Equity",
+                "LREN3 BS Equity",
+                "VIVT4 BS Equity"
+             ]
+
+    @testset "Async bds" begin
+        println("Async bds benchmark")
+        @time result = BLPData.bds(SESSION, tickers, "DVD_HIST_GROSS_WITH_AMT_STAT")
+        @test isa(result, Dict)
+
+        for ticker in tickers
+            @test haskey(result, ticker)
+        end
+    end
+
+    @testset "Async bdh" begin
+        println("Async bdh benchmark")
+        @time result = BLPData.bdh(SESSION, tickers, ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
+        @test isa(result, Dict)
+
+        for ticker in tickers
+            @test haskey(result, ticker)
+        end
+    end
 end
 
 BLPData.stop(SESSION)
