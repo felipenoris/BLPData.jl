@@ -13,7 +13,7 @@ available from the API.
 
 ## Requirements
 
-* Julia v1.3 or newer.
+* Julia v1.4 or newer.
 
 * Windows, Linux or macOS.
 
@@ -65,6 +65,17 @@ julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
 │ 4   │ Brazil                       │
 
 julia> BLPData.stop(session)
+```
+
+`BLPData.bdh` and `BLPData.bds` also accepts a list of tickers. In this case, the result is a `Dict`
+where the key is the security name and value is a `Vector` of named tuples.
+
+```julia
+julia> BLPData.bdh(session, [ "PETR4 BS Equity", "VALE3 BS Equity" ], ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10) )
+Dict{Any,Any} with 2 entries:
+  "PETR4 BS Equity" => Any[(date = 2020-01-02, PX_LAST = 30.7, VOLUME = 3.77745e7), (date = 2020-01-03, PX_LAST = 30.45, VOLUME = 7.15956e7), (date = 2020-01-06, PX_LAST = 30.81, VOLUME = 8.1844e7), (date = 202…
+
+  "VALE3 BS Equity" => Any[(date = 2020-01-02, PX_LAST = 54.33, VOLUME = 1.75097e7), (date = 2020-01-03, PX_LAST = 53.93, VOLUME = 1.72848e7), (date = 2020-01-06, PX_LAST = 53.61, VOLUME = 3.27878e7), (date = 2…
 ```
 
 ## Contributing

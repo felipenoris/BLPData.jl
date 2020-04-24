@@ -35,27 +35,34 @@ function send_request(f::Function, session::Session, service_name::AbstractStrin
 
     # inspect result schema
     # elements = Element(req)
-    # elements_schema = BLP.SchemaElementDefinition(elements)
+    # elements_schema = SchemaElementDefinition(elements)
 
     f(request)
     return send_request(request, queue)
 end
 
-function for_each_response_message_element(f::Function, queue::EventQueue, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false, async::Bool=false)
+function for_each_response_message_element(f::Function, queue::EventQueue, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false)
 
     local response_event::Event
+    local yielded = false # marks wether previous try_next_event call didn't return an event, causing a yield() call
 
     while true
 
-        if async
-            response_event = try_next_event(queue)
+        if yielded
+            verbose && println("started next_event on corr_id=$corr_id...")
+            response_event = next_event(queue, timeout_milliseconds=timeout_milliseconds)
+            verbose && println("... finished next_event on corr_id=$corr_id.")
+            yielded = false # resets flag
+        else
+            try_next_event_result = try_next_event(queue)
 
-            if response_event == nothing
+            if try_next_event_result == nothing
+                yielded = true
                 yield()
                 continue
+            else
+                response_event = try_next_event_result
             end
-        else
-            response_event = next_event(queue, timeout_milliseconds=timeout_milliseconds)
         end
 
         if response_event.event_type == BLPAPI_EVENTTYPE_TIMEOUT
@@ -75,7 +82,7 @@ function for_each_response_message_element(f::Function, queue::EventQueue, corr_
 
             if verbose
                 println("Reponse Element Schema")
-                println(BLP.SchemaElementDefinition(element))
+                println(SchemaElementDefinition(element))
             end
 
             f(Element(message))

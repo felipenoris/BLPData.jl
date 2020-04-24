@@ -691,7 +691,7 @@ end
 #        blpapi_EventQueue_t *eventQueue,
 #        int timeout);
 function blpapi_EventQueue_nextEvent(queue_handle::Ptr{Cvoid}, timeout::Integer)
-    ccall((:blpapi_EventQueue_nextEvent, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), queue_handle, timeout)
+    @threadcall((:blpapi_EventQueue_nextEvent, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid}, Cint), queue_handle, timeout)
 end
 
 #int blpapi_EventQueue_purge(blpapi_EventQueue_t *eventQueue);
