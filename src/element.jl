@@ -295,6 +295,14 @@ end
             return Dates.Date(buffer_ref[])
         end
 
+    elseif D == BLPAPI_DATATYPE_TIME
+        parse_value_block = quote
+            buffer_ref = Ref{BLPDateTime}()
+            err = blpapi_Element_getValueAsDatetime(element.handle, buffer_ref, index-1)
+            error_check(err, "Failed to get Date element value")
+            return Dates.Time(buffer_ref[])
+        end
+
     elseif D == BLPAPI_DATATYPE_DATETIME
         parse_value_block = quote
             buffer_ref = Ref{BLPDateTime}()
@@ -306,7 +314,7 @@ end
 
     elseif D == BLPAPI_DATATYPE_SEQUENCE
         # get_element_value can be used on sequence only if it is an array
-        @assert A "get_element_value: Can't get element value from datatype $D with is_array = $A."
+        @assert A "get_element_value: Can't get element value from datatype $D that is not an array (is_array = $A)."
 
         parse_value_block = quote
             buffer_ref = Ref{Ptr{Cvoid}}(C_NULL)
@@ -314,6 +322,15 @@ end
             error_check(err, "Failed to get Date element value")
             return Element(buffer_ref[], element)
         end
+
+    elseif D == BLPAPI_DATATYPE_ENUMERATION
+        parse_value_block = quote
+            buffer_ref = Ref{Ptr{Cvoid}}(C_NULL)
+            err = blpapi_Element_getValueAsName(element.handle, buffer_ref, index-1)
+            error_check(err, "Failed to get BLPName element value from Enumeration")
+            return BLPName(buffer_ref[])
+        end
+
     else
         error("get_element_value: support for datatype $D not implemented.")
     end
@@ -382,3 +399,21 @@ function Base.Dict(element::AbstractElement)
     as_dict!(dict, element)
     return dict
 end
+
+function push_named_tuples!(result::T, element_vec::Element{true, BLPAPI_DATATYPE_SEQUENCE}) where {T<:Vector}
+    tuple_keys = nothing
+
+    for element in get_element_value(element_vec)
+
+        if tuple_keys == nothing
+            tuple_keys = Tuple([ child_element.name.symbol for child_element in each_child_element(element) ])
+        else
+            @assert tuple_keys == Tuple([ child_element.name.symbol for child_element in each_child_element(element) ])
+        end
+
+        tuple_values = Tuple([ get_element_value(child_element) for child_element in each_child_element(element) ])
+        push!(result, (; zip(tuple_keys, tuple_values)...)) # trick based on the docstring for NamedTuple
+    end
+end
+
+to_named_tuple(element::Element{false, BLPAPI_DATATYPE_SEQUENCE}) = (; [ (child_element.name.symbol, get_element_value(child_element)) for child_element in each_child_element(element) ]...)

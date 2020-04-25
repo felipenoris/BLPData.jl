@@ -29,3 +29,11 @@ function Base.iterate(iter::MessageIterator, state=nothing)
         return (iter_result, nothing)
     end
 end
+
+@inline function has_correlation_id(message::Message, corr_id::CorrelationId) :: Bool
+    return corr_id ∈ message.correlation_ids
+end
+
+@inline function check_has_correlation_id(message::Message, corr_id::CorrelationId)
+    @assert has_correlation_id(message, corr_id) "Got message with unexpected correlation id: $(message.correlation_ids) (expected $corr_id)."
+end

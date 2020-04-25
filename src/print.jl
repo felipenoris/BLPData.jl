@@ -125,3 +125,14 @@ function print_element_tree(io::IO, root::Element{A,D}, prefix="") where {A,D}
         println(io, "$prefix$(root.name) <: Element{$A, $D} = $(get_element_value(root))")
     end
 end
+
+function Base.show(io::IO, event::Event)
+    println(io, "Event $(event.event_type)")
+
+    for (i, message) in enumerate(each_message(event))
+        println(io, "Message $i")
+        println(io, message.correlation_ids)
+        element = BLPData.Element(message)
+        print_element_tree(io, element, "    ")
+    end
+end

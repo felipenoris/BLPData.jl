@@ -26,17 +26,14 @@ function Dates.Date(blp_datetime::BLPDateTime)
     return Dates.Date(blp_datetime.year, blp_datetime.month, blp_datetime.day)
 end
 
-function Dates.DateTime(dt::BLPDateTime; ignore_offset::Bool=false)
-    if !ignore_offset
-        @assert !has_part(dt, BLPAPI_DATETIME_OFFSET_PART) "$dt is not a pure DateTime."
-    end
-
-    return Dates.DateTime(dt.year, dt.month, dt.day, dt.hours, dt.minutes, dt.seconds, dt.milliSeconds)
+function Dates.Time(blp_datetime::BLPDateTime)
+    @assert blp_datetime.parts & (BLPAPI_DATETIME_DATE_PART + BLPAPI_DATETIME_OFFSET_PART) == 0
+    return Dates.Time(blp_datetime.hours, blp_datetime.minutes, blp_datetime.seconds, blp_datetime.milliSeconds)
 end
 
 function Base.show(io::IO, dt::BLPDateTime)
-    datetime_no_timezone = DateTime(dt, ignore_offset=true)
-    show(io, datetime_no_timezone)
+
+    @printf(io, "%04d-%02d-%02dT%02d:%02d:%02d.%03d", dt.year, dt.month, dt.day, dt.hours, dt.minutes, dt.seconds, dt.milliSeconds)
 
     if dt.offset >= 0
         print(io, '+')
