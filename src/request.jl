@@ -108,3 +108,5 @@ function push_named_tuples!(result::T, element_vec::Element{true, BLPAPI_DATATYP
         push!(result, (; zip(tuple_keys, tuple_values)...)) # trick based on the docstring for NamedTuple
     end
 end
+
+to_named_tuple(element::Element{false, BLPAPI_DATATYPE_SEQUENCE}) = (; [ (child_element.name.symbol, get_element_value(child_element)) for child_element in each_child_element(element) ]...)
