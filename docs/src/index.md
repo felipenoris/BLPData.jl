@@ -97,7 +97,7 @@ function bdh_and_bds_async()
     return bdh_result, bds_result
 end
 
-a, b = bdh_and_bds_async()
+h, s = bdh_and_bds_async()
 ```
 
 ## Contributing
