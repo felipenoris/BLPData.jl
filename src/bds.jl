@@ -66,6 +66,8 @@ end
 
 Runs a query for reference data of a security.
 Returns a `Dict` where the key is the security name and value is a `Vector` of named tuples.
+
+Internally, BLPData will process a `ReferenceDataRequest` request for each security in parallel.
 """
 function bds(session::Session, securities::Vector{T}, field::AbstractString;
             options=nothing, # expects key->value pairs or Dict

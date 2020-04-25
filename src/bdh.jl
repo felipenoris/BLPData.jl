@@ -121,6 +121,8 @@ end
 
 Runs a query for historical data.
 Returns a `Dict` where the key is the security name and value is a `Vector` of named tuples.
+
+Internally, BLPData will process a `ReferenceDataRequest` request for each security in parallel.
 """
 function bdh(session::Session, securities::Vector{T1}, fields::Vector{T2}, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option

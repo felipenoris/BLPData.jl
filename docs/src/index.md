@@ -67,8 +67,11 @@ julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
 julia> BLPData.stop(session)
 ```
 
+## Async support
+
 `BLPData.bdh` and `BLPData.bds` also accepts a list of tickers. In this case, the result is a `Dict`
 where the key is the security name and value is a `Vector` of named tuples.
+BLPData will automatically process the securities in parallel.
 
 ```julia
 julia> BLPData.bdh(session, [ "PETR4 BS Equity", "VALE3 BS Equity" ], ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10) )
@@ -76,6 +79,25 @@ Dict{Any,Any} with 2 entries:
   "PETR4 BS Equity" => Any[(date = 2020-01-02, PX_LAST = 30.7, VOLUME = 3.77745e7), (date = 2020-01-03, PX_LAST = 30.45, VOLUME = 7.15956e7), (date = 2020-01-06, PX_LAST = 30.81, VOLUME = 8.1844e7), (date = 202…
 
   "VALE3 BS Equity" => Any[(date = 2020-01-02, PX_LAST = 54.33, VOLUME = 1.75097e7), (date = 2020-01-03, PX_LAST = 53.93, VOLUME = 1.72848e7), (date = 2020-01-06, PX_LAST = 53.61, VOLUME = 3.27878e7), (date = 2…
+```
+
+In general, public functions that process requests (`BLPData.bdh` and `BLPData.bds` for instance)
+support async calls, by making use of the `@async` macro, as shown in the following example.
+
+```julia
+function bdh_and_bds_async()
+    local bdh_result
+    local bds_result
+
+    @sync begin
+        @async bdh_result = BLPData.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10))
+        @async bds_result = BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS")
+    end
+
+    return bdh_result, bds_result
+end
+
+a, b = bdh_and_bds_async()
 ```
 
 ## Contributing
