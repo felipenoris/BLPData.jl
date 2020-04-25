@@ -10,6 +10,14 @@ end
 
 SESSION = BLPData.Session()
 
+@testset "Subscribe" begin
+    subscription_string = "//blp/mktdata/ticker/PETR4 BS Equity?fields=BID,ASK"
+    sublist = BLPData.SubscriptionList()
+    topic = push!(sublist, subscription_string)
+    BLPData.subscribe(SESSION, sublist)
+    BLPData.unsubscribe(SESSION, sublist)
+end
+
 @testset "Service" begin
     service = SESSION["refdata"]
 

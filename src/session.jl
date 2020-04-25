@@ -47,22 +47,27 @@ get_client_mode(opt::SessionOptions) = ClientMode(blpapi_SessionOptions_clientMo
 
 const DEFAULT_SERVICE_NAMES = Set(["//blp/mktdata", "//blp/refdata"])
 
-function service_name_str(service_name::AbstractString)
+function service_name_str(service_name::AbstractString) :: String
     @assert length(service_name) >= 2 "Short service name `$(service_name)`"
 
     if !(service_name[1] == '/' && service_name[2] == '/')
         return "//blp/$service_name"
     else
-        return service_name
+        return String(service_name)
     end
 end
 
+const DEFAULT_SESSION_START_TIMEOUT_MSECS = UInt32(5000) # 5 secs
+
 """
-    Session(services...;
+    Session(services;
             host=nothing,
             port=nothing,
             client_mode=nothing,
             service_check_timeout_msecs=nothing
+            service_download_timeout_msecs=nothing,
+            session_start_timeout_msecs=DEFAULT_SESSION_START_TIMEOUT_MSECS,
+            verbose::Bool=false
         )
 
 Creates a new session for Bloomberg API.
@@ -85,13 +90,15 @@ customized_session = Blpapi.Session("//blp/refdata",
     client_mode=Blpapi.BLPAPI_CLIENTMODE_DAPI)
 ```
 """
-function Session(services::Set{String}=DEFAULT_SERVICE_NAMES;
+function Session(services::Set{T}=DEFAULT_SERVICE_NAMES;
             host=nothing,
             port=nothing,
             client_mode=nothing,
             service_check_timeout_msecs=nothing,
-            service_download_timeout_msecs=nothing
-        )
+            service_download_timeout_msecs=nothing,
+            session_start_timeout_msecs=DEFAULT_SESSION_START_TIMEOUT_MSECS,
+            verbose::Bool=false
+        ) where {T<:AbstractString}
 
     opt = SessionOptions(host=host, port=port, client_mode=client_mode, service_check_timeout_msecs=service_check_timeout_msecs, service_download_timeout_msecs=service_download_timeout_msecs)
     handle = blpapi_Session_create(opt.handle, C_NULL, C_NULL, C_NULL)
@@ -115,11 +122,110 @@ function Session(services::Set{String}=DEFAULT_SERVICE_NAMES;
         push!(opened_services, service_name)
     end
 
-    return Session(handle, opened_services)
+    return Session(handle, opened_services, session_start_timeout_msecs, verbose)
 end
 
-Session(service::AbstractString; host=nothing, port=nothing, client_mode=nothing, service_check_timeout_msecs=nothing, service_download_timeout_msecs=nothing) = Session(Set([String(service)]), host=host, port=port, client_mode=client_mode, service_check_timeout_msecs=service_check_timeout_msecs, service_download_timeout_msecs=service_download_timeout_msecs)
-Session(services...; host=nothing, port=nothing, client_mode=nothing, service_check_timeout_msecs=nothing, service_download_timeout_msecs=nothing) = Session(Set([String(service) for service in services]), host=host, port=port, client_mode=client_mode, service_check_timeout_msecs=service_check_timeout_msecs, service_download_timeout_msecs=service_download_timeout_msecs)
+# called by the struct constructor
+function handle_session_start_events(session::Session, session_start_timeout_msecs::Integer, verbose::Bool)
+
+    local evn
+
+    try
+        evn = next_event(session, timeout_milliseconds=session_start_timeout_msecs)
+        @assert evn.event_type == BLPAPI_EVENTTYPE_SESSION_STATUS
+        for message in each_message(evn)
+            element = Element(message)
+            @assert element.name.symbol == :SessionConnectionUp "Failed to start session: expected SessionConnectionUp, got $(element)"
+            if verbose
+                @info("SessionConnectionUp: server=$(element["server"]), encryptionStatus=$(element["encryptionStatus"])")
+            end
+        end
+    finally
+        # destroy this event early, before GC
+        isa(evn, Event) && destroy!(evn)
+    end
+
+    try
+        evn = next_event(session, timeout_milliseconds=session_start_timeout_msecs)
+        @assert evn.event_type == BLPAPI_EVENTTYPE_SESSION_STATUS
+        for message in each_message(evn)
+            element = Element(message)
+            @assert element.name.symbol == :SessionStarted "Failed to start session: expected SessionStarted, got $(element)"
+            if verbose
+                @info(element)
+            end
+        end
+    finally
+        # destroy this event early, before GC
+        isa(evn, Event) && destroy!(evn)
+    end
+
+    # handle one ServiceOpened event for each opened service
+    if !isempty(session.opened_services)
+        for i in 1:length(session.opened_services)
+            try
+                evn = next_event(session, timeout_milliseconds=session_start_timeout_msecs)
+                @assert evn.event_type == BLPAPI_EVENTTYPE_SERVICE_STATUS
+                for message in each_message(evn)
+                    element = Element(message)
+                    @assert element.name.symbol == :ServiceOpened "Failed to start session: expected ServiceOpened, got $(element)"
+                    if verbose
+                        @info(element)
+                    end
+                end
+            finally
+                # destroy this event early, before GC
+                isa(evn, Event) && destroy!(evn)
+            end
+        end
+    end
+
+    evn = try_next_event(session)
+    if evn != nothing
+        @warn("Unhandled event during Session opening: $evn.")
+        destroy!(evn)
+    end
+end
+
+function Session(service::AbstractString;
+            host=nothing,
+            port=nothing,
+            client_mode=nothing,
+            service_check_timeout_msecs=nothing,
+            service_download_timeout_msecs=nothing,
+            session_start_timeout_msecs=DEFAULT_SESSION_START_TIMEOUT_MSECS,
+            verbose::Bool=false
+        )
+
+    Session(Set([String(service)]),
+            host=host,
+            port=port,
+            client_mode=client_mode,
+            service_check_timeout_msecs=service_check_timeout_msecs,
+            service_download_timeout_msecs=service_download_timeout_msecs,
+            session_start_timeout_msecs=session_start_timeout_msecs,
+            verbose=verbose)
+end
+
+function Session(services::Vector{T};
+            host=nothing,
+            port=nothing,
+            client_mode=nothing,
+            service_check_timeout_msecs=nothing,
+            service_download_timeout_msecs=nothing,
+            session_start_timeout_msecs=DEFAULT_SESSION_START_TIMEOUT_MSECS,
+            verbose::Bool=false
+        ) where {T<:AbstractString}
+
+    Session(Set(services),
+            host=host,
+            port=port,
+            client_mode=client_mode,
+            service_check_timeout_msecs=service_check_timeout_msecs,
+            service_download_timeout_msecs=service_download_timeout_msecs,
+            session_start_timeout_msecs=session_start_timeout_msecs,
+            verbose=verbose)
+end
 
 """
     stop(session::Session)
@@ -134,11 +240,45 @@ function stop(session::Session)
     error_check(err, "Failed to stop session")
 end
 
+"""
+    next_event(event_source; timeout_milliseconds::Integer=UInt32(0)) :: Event
+
+Reads the next event in the stream events of the `event_source`.
+This method blocks until an event is available.
+
+See also [`try_next_event`](@ref).
+
+# Event Sources
+
+The `event_source` can be either a `Session` or an `EventQueue`.
+"""
 function next_event(session::Session; timeout_milliseconds::Integer=UInt32(0)) :: Event
     event_handle_ref = Ref{Ptr{Cvoid}}(C_NULL)
     err = blpapi_Session_nextEvent(session.handle, event_handle_ref, timeout_milliseconds)
     error_check(err, "Failed to get next event from session")
-    return Event(event_handle_ref[])
+    return Event(event_handle_ref[], session)
+end
+
+"""
+    try_next_event(event_source) :: Union{Nothing, Event}
+
+Reads the next event in the stream events of the `event_source`.
+If no event is available, returns `nothing`. This method never blocks.
+
+See also [`next_event`](@ref).
+
+# Event Sources
+
+The `event_source` can be either a `Session` or an `EventQueue`.
+"""
+function try_next_event(session::Session) :: Union{Nothing, Event}
+    event_handle_ref = Ref{Ptr{Cvoid}}(C_NULL)
+    status = blpapi_Session_tryNextEvent(session.handle, event_handle_ref)
+    if status == 0
+        return Event(event_handle_ref[], session)
+    else
+        return nothing
+    end
 end
 
 Base.getindex(session::Session, service_name::AbstractString) = Service(session, service_name)

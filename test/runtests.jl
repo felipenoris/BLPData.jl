@@ -21,9 +21,6 @@ end
 @testset "BLPDateTime" begin
     today_dt = Dates.today()
     @test today_dt == Date(BLPData.BLPDateTime(today_dt))
-    now_dt = Dates.now()
-    @test now_dt == DateTime(BLPData.BLPDateTime(now_dt))
-    show(BLPData.BLPDateTime(now_dt, -180))
 end
 
 @testset "Session Options" begin
@@ -62,6 +59,65 @@ end
 
     name4 = BLPData.BLPName(BLPData.blpapi_Name_findName(String(:HEY_YOU)))
     @test name2.handle == name4.handle
+end
+
+@testset "CorrelationId" begin
+    @testset "header" begin
+        sz = UInt32(sizeof(BLPData.CorrelationId))
+        tp = BLPData.BLPAPI_CORRELATION_TYPE_INT
+        class = UInt32(10)
+        reserved = UInt32(0)
+        header = BLPData.CorrelationIdHeader(sz, tp, class, reserved)
+        @test header == BLPData.CorrelationIdHeader(BLPData.encode_header(header))
+    end
+
+    @testset "corr" begin
+        corr = BLPData.CorrelationId(10, class_id=UInt32(255))
+        header = BLPData.CorrelationIdHeader(corr)
+        @test header.struct_size == sizeof(BLPData.CorrelationId)
+        @test header.correlation_type == BLPData.BLPAPI_CORRELATION_TYPE_INT
+        @test header.class_id == 0xff
+        @test header.reserved == 0
+    end
+end
+
+@testset "SubscriptionTopic" begin
+    @testset "eq default" begin
+        topic1 = BLPData.SubscriptionTopic(BLPData.CorrelationId(), "hey you")
+        topic2 = BLPData.SubscriptionTopic(BLPData.CorrelationId(), "hey you")
+        @test topic1 == topic2
+        @test hash(topic1) == hash(topic2)
+    end
+
+    @testset "eq custom value" begin
+        topic1 = BLPData.SubscriptionTopic(BLPData.CorrelationId(5), "hey you")
+        topic2 = BLPData.SubscriptionTopic(BLPData.CorrelationId(5), "hey you")
+        @test topic1 == topic2
+        @test hash(topic1) == hash(topic2)
+    end
+
+    @testset "diff custom value" begin
+        topic1 = BLPData.SubscriptionTopic(BLPData.CorrelationId(4), "hey you")
+        topic2 = BLPData.SubscriptionTopic(BLPData.CorrelationId(5), "hey you")
+        @test topic1 != topic2
+    end
+end
+
+@testset "SubscriptionList" begin
+    sublist = BLPData.SubscriptionList()
+    @test isempty(sublist)
+    result = push!(sublist, "hey you out there")
+    @test !isempty(sublist)
+    @test length(sublist) == 1
+    @test result == sublist[1]
+    result2 = push!(sublist, "can you feel me")
+    @test length(sublist) == 2
+
+    for topic in sublist
+        @test isa(topic, BLPData.SubscriptionTopic)
+        @test topic == result || topic == result2
+        @test topic.correlation_id != BLPData.CorrelationId()
+    end
 end
 
 if haskey(ENV, "NO_BLP_SERVICE")

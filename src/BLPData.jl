@@ -6,6 +6,7 @@ using Printf
 
 include("deps.jl")
 include("types.jl")
+include("correlation_id.jl")
 include("datetime.jl")
 include("c.jl")
 include("constant.jl")
@@ -21,6 +22,7 @@ include("print.jl")
 include("bdh.jl")
 include("bds.jl")
 include("bdp.jl")
+include("subscription.jl")
 
 function __init__()
     check_deps()

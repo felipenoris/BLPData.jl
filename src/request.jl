@@ -42,7 +42,6 @@ function send_request(f::Function, session::Session, service_name::AbstractStrin
 end
 
 function for_each_response_message_element(f::Function, queue::EventQueue, corr_id::CorrelationId; timeout_milliseconds::Integer=UInt32(0), verbose::Bool=false)
-
     while true
 
         response_event = next_event(queue, timeout_milliseconds=timeout_milliseconds)
@@ -59,7 +58,7 @@ function for_each_response_message_element(f::Function, queue::EventQueue, corr_
         # process BLPAPI_EVENTTYPE_RESPONSE or BLPAPI_EVENTTYPE_PARTIAL_RESPONSE
         verbose && @info("Reading messages from event $(response_event.event_type)")
         for message in each_message(response_event)
-            @assert corr_id ∈ message.correlation_ids "Got message with unexpected correlation id: $(message.correlation_ids) (expected $corr_id)."
+            check_has_correlation_id(message, corr_id)
             element = Element(message)
 
             if verbose
@@ -75,6 +74,9 @@ function for_each_response_message_element(f::Function, queue::EventQueue, corr_
             verbose && @info("Finished reading events")
             break
         end
+
+        # destroy this event early, before GC
+        destroy!(response_event)
     end
 
     nothing
@@ -92,21 +94,3 @@ function parse_response_as(::Type{T}, queue::EventQueue, corr_id::CorrelationId;
     end
     return result
 end
-
-function push_named_tuples!(result::T, element_vec::Element{true, BLPAPI_DATATYPE_SEQUENCE}) where {T<:Vector}
-    tuple_keys = nothing
-
-    for element in get_element_value(element_vec)
-
-        if tuple_keys == nothing
-            tuple_keys = Tuple([ child_element.name.symbol for child_element in each_child_element(element) ])
-        else
-            @assert tuple_keys == Tuple([ child_element.name.symbol for child_element in each_child_element(element) ])
-        end
-
-        tuple_values = Tuple([ get_element_value(child_element) for child_element in each_child_element(element) ])
-        push!(result, (; zip(tuple_keys, tuple_values)...)) # trick based on the docstring for NamedTuple
-    end
-end
-
-to_named_tuple(element::Element{false, BLPAPI_DATATYPE_SEQUENCE}) = (; [ (child_element.name.symbol, get_element_value(child_element)) for child_element in each_child_element(element) ]...)

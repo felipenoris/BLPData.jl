@@ -145,6 +145,42 @@ function blpapi_Session_nextEvent(session_handle::Ptr{Cvoid}, event_handle_ref::
     ccall((:blpapi_Session_nextEvent, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, UInt32), session_handle, event_handle_ref, timeout)
 end
 
+#int blpapi_Session_tryNextEvent(
+#        blpapi_Session_t* session,
+#        blpapi_Event_t **eventPointer);
+function blpapi_Session_tryNextEvent(session_handle::Ptr{Cvoid}, event_handle_ref::Ref{Ptr{Cvoid}})
+    ccall((:blpapi_Session_tryNextEvent, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}), session_handle, event_handle_ref)
+end
+
+#int blpapi_Session_subscribe(
+#        blpapi_Session_t *session,
+#        const blpapi_SubscriptionList_t *subscriptionList,
+#        const blpapi_Identity_t* handle,
+#        const char *requestLabel,
+#        int requestLabelLen);
+function blpapi_Session_subscribe(session_handle::Ptr{Cvoid}, sublist_handle::Ptr{Cvoid}, identity_handle::Ptr{Cvoid}, request_label::Ptr{UInt8}, request_label_len::Integer)
+    ccall((:blpapi_Session_subscribe, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Cint), session_handle, sublist_handle, identity_handle, request_label, request_label_len)
+end
+
+#int blpapi_Session_unsubscribe(
+#        blpapi_Session_t *session,
+#        const blpapi_SubscriptionList_t *unsubscriptionList,
+#        const char *requestLabel,
+#        int requestLabelLen);
+function blpapi_Session_unsubscribe(session_handle::Ptr{Cvoid}, sublist_handle::Ptr{Cvoid}, request_label::Ptr{UInt8}, request_label_len::Integer)
+    ccall((:blpapi_Session_unsubscribe, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{UInt8}, Cint), session_handle, sublist_handle, request_label, request_label_len)
+end
+
+#int blpapi_Session_cancel(
+#        blpapi_Session_t *session,
+#        const blpapi_CorrelationId_t *correlationIds,
+#        size_t numCorrelationIds,
+#        const char *requestLabel,
+#        int requestLabelLen);
+function blpapi_Session_cancel(session_handle::Ptr{Cvoid}, correlation_ids_array::Ptr{Cvoid}, num_correlation_ids::Integer, request_label::Ptr{UInt8}, request_label_len::Integer)
+    ccall((:blpapi_Session_cancel, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{Cvoid}, Csize_t, Ptr{UInt8}, Cint), session_handle, correlation_ids_array, num_correlation_ids, request_label, request_label_len)
+end
+
 #
 # blpapi_service.h
 #
@@ -660,6 +696,9 @@ end
 #        const blpapi_Element_t *element,
 #        blpapi_Name_t **buffer,
 #        size_t index);
+function blpapi_Element_getValueAsName(element_handle::Ptr{Cvoid}, buffer_ref::Ref{Ptr{Cvoid}}, index::Integer)
+    ccall((:blpapi_Element_getValueAsName, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Csize_t), element_handle, buffer_ref, index)
+end
 
 #
 # blpapi_event.h
@@ -747,3 +786,66 @@ end
 function blpapi_Message_correlationId(message_handle::Ptr{Cvoid}, index::Integer)
     ccall((:blpapi_Message_correlationId, libblpapi3), CorrelationId, (Ptr{Cvoid}, Csize_t), message_handle, index)
 end
+
+#
+# blpapi_subscriptionlist.h
+#
+
+#blpapi_SubscriptionList_t *blpapi_SubscriptionList_create(void);
+function blpapi_SubscriptionList_create()
+    ccall((:blpapi_SubscriptionList_create, libblpapi3), Ptr{Cvoid}, ())
+end
+
+#void blpapi_SubscriptionList_destroy(blpapi_SubscriptionList_t *list);
+function blpapi_SubscriptionList_destroy(sublist_handle::Ptr{Cvoid})
+    ccall((:blpapi_SubscriptionList_destroy, libblpapi3), Cvoid, (Ptr{Cvoid},), sublist_handle)
+end
+
+#int blpapi_SubscriptionList_add(
+#                             blpapi_SubscriptionList_t     *list,
+#                             const char                    *subscriptionString,
+#                             const blpapi_CorrelationId_t  *correlationId,
+#                             const char                   **fields,
+#                             const char                   **options,
+#                             size_t                         numfields,
+#                             size_t                         numOptions);
+
+#int blpapi_SubscriptionList_addResolved(
+#                              blpapi_SubscriptionList_t    *list,
+#                              const char                   *subscriptionString,
+#                              const blpapi_CorrelationId_t *correlationId);
+function blpapi_SubscriptionList_addResolved(sublist_handle::Ptr{Cvoid}, subcription_string::AbstractString, correlation_ref::Ref{CorrelationId})
+    ccall((:blpapi_SubscriptionList_addResolved, libblpapi3), Cint, (Ptr{Cvoid}, Cstring, Ref{CorrelationId}), sublist_handle, subcription_string, correlation_ref)
+end
+
+#int blpapi_SubscriptionList_clear(blpapi_SubscriptionList_t *list);
+function blpapi_SubscriptionList_clear(sublist_handle::Ptr{Cvoid})
+    ccall((:blpapi_SubscriptionList_clear, libblpapi3), Cint, (Ptr{Cvoid},), sublist_handle)
+end
+
+#int blpapi_SubscriptionList_append(blpapi_SubscriptionList_t       *dest,
+#                                   const blpapi_SubscriptionList_t *src);
+
+#int blpapi_SubscriptionList_size(const blpapi_SubscriptionList_t *list);
+function blpapi_SubscriptionList_size(sublist_handle::Ptr{Cvoid})
+    ccall((:blpapi_SubscriptionList_size, libblpapi3), Cint, (Ptr{Cvoid},), sublist_handle)
+end
+
+#int blpapi_SubscriptionList_correlationIdAt(
+#                                       const blpapi_SubscriptionList_t *list,
+#                                       blpapi_CorrelationId_t          *result,
+#                                       size_t                           index);
+function blpapi_SubscriptionList_correlationIdAt(sublist_handle::Ptr{Cvoid}, correlation_ref::Ref{CorrelationId}, index::Integer)
+    ccall((:blpapi_SubscriptionList_correlationIdAt, libblpapi3), Cint, (Ptr{Cvoid}, Ref{CorrelationId}, Csize_t), sublist_handle, correlation_ref, index)
+end
+
+#int blpapi_SubscriptionList_topicStringAt(blpapi_SubscriptionList_t  *list,
+#                                          const char                **result,
+#                                          size_t                      index);
+function blpapi_SubscriptionList_topicStringAt(sublist_handle::Ptr{Cvoid}, result::Ref{Ptr{UInt8}}, index::Integer)
+    ccall((:blpapi_SubscriptionList_topicStringAt, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{UInt8}}, Csize_t), sublist_handle, result, index)
+end
+
+#int blpapi_SubscriptionList_isResolvedAt(blpapi_SubscriptionList_t *list,
+#                                         int                       *result,
+#                                         size_t                     index);

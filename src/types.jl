@@ -12,7 +12,7 @@ connect to Desktop API, and falls back to Server API.
 The default when creating `SessionOptions`
 is `BLPAPI_CLIENTMODE_AUTO`.
 
-See also [`Session`](@ref), [`get_client_mode`](@ref).
+See also [`Session`](@ref).
 """
 @enum ClientMode::Cint begin
     BLPAPI_CLIENTMODE_AUTO        =  0
@@ -105,13 +105,16 @@ function destroy!(opt::SessionOptions)
     nothing
 end
 
-mutable struct Session
+abstract type AbstractEventSource end
+
+mutable struct Session <: AbstractEventSource
     handle::Ptr{Cvoid}
     opened_services::Set{String}
 
-    function Session(handle::Ptr{Cvoid}, opened_services::Set{String})
+    function Session(handle::Ptr{Cvoid}, opened_services::Set{String}, session_start_timeout_msecs::Integer, verbose::Bool)
         new_session = new(handle, opened_services)
         finalizer(destroy!, new_session)
+        handle_session_start_events(new_session, session_start_timeout_msecs, verbose)
         return new_session
     end
 end
@@ -124,28 +127,16 @@ function destroy!(session::Session)
     nothing
 end
 
-#=
-typedef struct blpapi_CorrelationId_t_ {
-    unsigned int  size:8;       // fill in the size of this struct
-    unsigned int  valueType:4;  // type of value held by this correlation id
-    unsigned int  classId:16;   // user defined classification id
-    unsigned int  reserved:4;   // for internal use must be 0
-
-    union {
-        blpapi_UInt64_t      intValue;
-        blpapi_ManagedPtr_t  ptrValue;
-    } value;
-} blpapi_CorrelationId_t;
-=#
+struct CorrelationValue
+    ptr::UInt
+    user_data_array::NTuple{4, UInt}
+    fun_ptr::UInt
+end
 
 mutable struct CorrelationId
     header::UInt32
-    value::UInt64
+    value::CorrelationValue
 end
-
-CorrelationId() = CorrelationId(UInt32(0), UInt64(0))
-
-Base.:(==)(c1::CorrelationId, c2::CorrelationId) = c1.header == c2.header && c1.value == c2.value
 
 mutable struct Service
     handle::Ptr{Cvoid}
@@ -360,11 +351,12 @@ end
 mutable struct Event
     handle::Ptr{Cvoid}
     event_type::EventType
+    source::AbstractEventSource
 
-    function Event(handle::Ptr{Cvoid})
+    function Event(handle::Ptr{Cvoid}, source::AbstractEventSource)
         ptr_check(handle, "Failed to create Event")
         event_type = EventType(blpapi_Event_eventType(handle))
-        new_event = new(handle, event_type)
+        new_event = new(handle, event_type, source)
         finalizer(destroy!, new_event)
         return new_event
     end
@@ -425,7 +417,7 @@ handle all responses synchronously.
 
 Use `EventQueue()` to create a new queue.
 """
-mutable struct EventQueue
+mutable struct EventQueue <: AbstractEventSource
     handle::Ptr{Cvoid}
 
     function EventQueue(handle::Ptr{Cvoid})
@@ -444,3 +436,58 @@ function destroy!(queue::EventQueue)
     end
     nothing
 end
+
+"""
+A list of `SubscriptionTopic`s.
+This struct supports the basic vector API.
+
+# Examples
+
+```julia
+list = BLPData.SubscriptionList() # creates an empty list
+append!(list, ["//blp/mktdata/ticker/PETR4 BS Equity?fields=BID,ASK", "//blp/mktdata/ticker/VALE3 BS Equity?fields=BID,ASK"])
+
+for topic in list
+    println(topic)
+end
+```
+
+See also [`SubscriptionTopic`](@ref).
+"""
+mutable struct SubscriptionList
+    handle::Ptr{Cvoid}
+
+    function SubscriptionList(handle::Ptr{Cvoid})
+        ptr_check(handle, "Failed to create SubscriptionList")
+        new_sublist = new(handle)
+        finalizer(destroy!, new_sublist)
+        return new_sublist
+    end
+end
+
+function destroy!(sublist::SubscriptionList)
+    if sublist.handle != C_NULL
+        blpapi_SubscriptionList_destroy(sublist.handle)
+        sublist.handle = C_NULL
+    end
+    nothing
+end
+
+"""
+Represents a Topic related to the subscription API.
+
+# Fields
+
+* `correlation_id`: unique identifier for tracking events in the event stream related to this subscription.
+
+* `topic`: a valid subscription string for the BLPAPI.
+
+See also [`subscribe`](@ref).
+"""
+struct SubscriptionTopic
+    correlation_id::CorrelationId
+    topic::String
+end
+
+Base.:(==)(t1::SubscriptionTopic, t2::SubscriptionTopic) = t1.correlation_id == t2.correlation_id && t1.topic == t2.topic
+Base.hash(t::SubscriptionTopic) = hash(t.correlation_id) + hash(t.topic)

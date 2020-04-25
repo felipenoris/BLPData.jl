@@ -13,8 +13,8 @@ function shared_lib_filename()
 end
 
 libblpapi3_path = "" # global var with path to the shared library
-const libblpapi3 = shared_lib_filename()
 libblpapi3_handle = C_NULL # global var to be set at __init__() -> check_deps()
+const libblpapi3 = shared_lib_filename()
 
 function get_artifact_dir()
     #artifact_dir = abspath(artifact"blpapi") # didn't work
@@ -33,7 +33,6 @@ function check_deps()
     global libblpapi3_handle
 
     if Sys.islinux()
-
         try
             libblpapi3_handle = dlopen(libblpapi3)
         catch err
@@ -49,7 +48,6 @@ function check_deps()
             error("$libblpapi3 cannot be opened.")
         end
     else
-
         libblpapi3_path = get_libblpapi_artifact_filepath()
         if !isfile(libblpapi3_path)
             error("Couldn't find shared library artifact at $libblpapi3_path.")
