@@ -7,5 +7,6 @@ BLPData.ClientMode
 BLPData.stop
 BLPData.bdh
 BLPData.bds
+BLPData.bdp
 BLPData.get_version_info
 ```

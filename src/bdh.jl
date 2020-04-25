@@ -1,9 +1,22 @@
 
 function bdh(session::Session, security::AbstractString, field::AbstractString, date_start::Date, date_end::Date;
-            periodicity=nothing,
-            options=nothing
+            periodicity=nothing, # periodicitySelection option
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
         )
-    bdh(session, security, [field], date_start, date_end, periodicity=periodicity, options=options)
+
+    bdh(session, security, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds)
+end
+
+function bdh(session::Session, securities::Vector{T}, field::AbstractString, date_start::Date, date_end::Date;
+            periodicity=nothing, # periodicitySelection option
+            options=nothing, # expects key->value pairs or Dict
+            verbose::Bool=false,
+            timeout_milliseconds::Integer=UInt32(0)
+        ) where {T<:AbstractString}
+
+    bdh(session, securities, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds)
 end
 
 """

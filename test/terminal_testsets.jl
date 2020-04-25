@@ -50,6 +50,33 @@ end
     BLPData.purge(queue)
 end
 
+@testset "bdp" begin
+    @testset "single field" begin
+        result = BLPData.bdp(SESSION, "PETR4 BS Equity", "PX_LAST")
+        @test haskey(result, :PX_LAST)
+        @test isa(result[:PX_LAST], Number)
+    end
+
+    @testset "many fields" begin
+        result = BLPData.bdp(SESSION, "PETR4 BS Equity", ["PX_LAST", "VOLUME"])
+        @test haskey(result, :PX_LAST)
+        @test haskey(result, :VOLUME)
+        @test isa(result[:PX_LAST], Number)
+        @test isa(result[:VOLUME], Number)
+    end
+
+    @testset "many securities" begin
+        result = BLPData.bdp(SESSION, ["PETR4 BS Equity", "VALE3 BS Equity"], ["PX_LAST", "VOLUME"])
+
+        for (k, v) in result
+            @test k == "PETR4 BS Equity" || k == "VALE3 BS Equity"
+            @test haskey(v, :PX_LAST)
+            @test isa(v[:PX_LAST], Number)
+            @test isa(v[:VOLUME], Number)
+        end
+    end
+end
+
 @testset "bdh" begin
     @time result = BLPData.bdh(SESSION, "IBM US Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
     df = DataFrame(result)
@@ -160,13 +187,39 @@ end
         end
     end
 
-    @testset "Async bdh" begin
+    @testset "Async bdh many fields" begin
         println("Async bdh benchmark")
         @time result = BLPData.bdh(SESSION, tickers, ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
         @test isa(result, Dict)
 
         for ticker in tickers
             @test haskey(result, ticker)
+            @test isa(result[ticker], Vector)
+
+            for row in result[ticker]
+                @test isa(row, NamedTuple)
+                @test haskey(row, :PX_LAST)
+                @test haskey(row, :VWAP_VOLUME)
+                @test isa(row[:PX_LAST], Number)
+                @test isa(row[:VWAP_VOLUME], Number)
+            end
+        end
+    end
+
+    @testset "Async bdh many fields" begin
+        println("Async bdh benchmark")
+        @time result = BLPData.bdh(SESSION, tickers, "PX_LAST", Date(2020, 1, 2), Date(2020, 1, 30))
+        @test isa(result, Dict)
+
+        for ticker in tickers
+            @test haskey(result, ticker)
+            @test isa(result[ticker], Vector)
+
+            for row in result[ticker]
+                @test isa(row, NamedTuple)
+                @test haskey(row, :PX_LAST)
+                @test isa(row[:PX_LAST], Number)
+            end
         end
     end
 end

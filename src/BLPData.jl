@@ -20,6 +20,7 @@ include("event_queue.jl")
 include("print.jl")
 include("bdh.jl")
 include("bds.jl")
+include("bdp.jl")
 
 function __init__()
     check_deps()

@@ -35,12 +35,48 @@ just open a new [issue](https://github.com/felipenoris/BLPData.jl/issues).
 
 ## Tutorial
 
+First you need a computer running the [Bloomberg Terminal software](https://www.bloomberg.com/professional/support/software-updates/).
+Then you can load the package and create a session.
+
 ```julia
 julia> using BLPData, Dates, DataFrames
 
 julia> session = BLPData.Session()
 Session services available: Set(["//blp/refdata", "//blp/mktdata"])
+```
 
+From a running session, use `BLPData.bdp` to get the lastest data on a given security or list of securities.
+
+```julia
+julia> BLPData.bdp(session, "PETR4 BS Equity", "PX_LAST")
+(PX_LAST = 15.95,)
+
+julia> BLPData.bdp(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"])
+(PX_LAST = 15.95, VOLUME = 1.601771e8)
+
+julia> BLPData.bdp(session, ["PETR4 BS Equity", "VALE3 BS Equity"], ["PX_LAST", "VOLUME"])
+Dict{Any,Any} with 2 entries:
+  "PETR4 BS Equity" => (PX_LAST = 15.95, VOLUME = 1.60177e8)
+  "VALE3 BS Equity" => (PX_LAST = 43.76, VOLUME = 5.49037e7)
+```
+
+For bulk data, use `BLPData.bds`.
+
+```julia
+julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
+4×1 DataFrame
+│ Row │ Address                      │
+│     │ String                       │
+├─────┼──────────────────────────────┤
+│ 1   │ Av Republica do Chile 65     │
+│ 2   │ Centro                       │
+│ 3   │ Rio De Janeiro, RJ 20035-900 │
+│ 4   │ Brazil                       │
+```
+
+For historical data, use `BLPData.bdh`.
+
+```julia
 julia> DataFrame( BLPData.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10) ))
 7×3 DataFrame
 │ Row │ date       │ PX_LAST │ VOLUME    │
@@ -53,17 +89,11 @@ julia> DataFrame( BLPData.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"],
 │ 5   │ 2020-01-08 │ 30.5    │ 4.82156e7 │
 │ 6   │ 2020-01-09 │ 30.4    │ 3.61027e7 │
 │ 7   │ 2020-01-10 │ 30.27   │ 2.53975e7 │
+```
 
-julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
-4×1 DataFrame
-│ Row │ Address                      │
-│     │ String                       │
-├─────┼──────────────────────────────┤
-│ 1   │ Av Republica do Chile 65     │
-│ 2   │ Centro                       │
-│ 3   │ Rio De Janeiro, RJ 20035-900 │
-│ 4   │ Brazil                       │
+When you're done with a session, you can close it with `BLPData.stop`.
 
+```julia
 julia> BLPData.stop(session)
 ```
 
@@ -132,4 +162,4 @@ the [MIT License](https://raw.githubusercontent.com/felipenoris/BLPData.jl/maste
 The **BLPData.jl** package uses and distributes binary files released by Bloomberg Finance L.P.
 under the licensing terms included in the file [`LICENSE.blpapi`](https://github.com/felipenoris/BLPData.jl/blob/master/LICENSE.blpapi).
 
-*BLOOMBERG and BLOOMBERG PROFESSIONAL are trademarks and service marks of Bloomberg Finance L.P., a Delaware limited partnership, or its subsidiaries. All rights reserved.*
+*BLOOMBERG, BLOOMBERG PROFESSIONAL and BLOOMBERG TERMINAL are trademarks and service marks of Bloomberg Finance L.P., a Delaware limited partnership, or its subsidiaries. All rights reserved.*
