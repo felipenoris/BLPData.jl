@@ -27,12 +27,6 @@ julia> using Pkg
 julia> Pkg.add("BLPData")
 ```
 
-## Getting Help
-
-If you're having any trouble, have any questions about this package
-or want to ask for a new feature,
-just open a new [issue](https://github.com/felipenoris/BLPData.jl/issues).
-
 ## Tutorial
 
 First you need a computer running the [Bloomberg Terminal software](https://www.bloomberg.com/professional/support/software-updates/).
@@ -151,22 +145,24 @@ end
 BLPData.unsubscribe(session, subscription_list)
 ```
 
-## Contributing
+## Getting Help and Contributing
+
+If you're having any trouble, have any questions about this package
+or want to ask for a new feature,
+just open a new [issue](https://github.com/felipenoris/BLPData.jl/issues).
 
 Contributions are always welcome!
 
 To contribute, fork the project on [GitHub](https://github.com/felipenoris/BLPData.jl)
 and send a Pull Request.
 
-## Alternative Libraries
+## References and Alternative Libraries
+
+* [BLPAPI Library](https://www.bloomberg.com/professional/support/api-library/)
 
 * [Bloomie.jl](https://github.com/ungil/Bloomie.jl)
 
 * [BLPAPI.jl by JuliaComputing](https://juliacomputing.com/products/juliapro#premium-pkgs-1)
-
-## References
-
-* [BLPAPI Library](https://www.bloomberg.com/professional/support/api-library/)
 
 * [Rblpapi for R](https://github.com/Rblp/Rblpapi)
 
