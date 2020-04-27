@@ -130,6 +130,27 @@ end
 h, s = bdh_and_bds_async()
 ```
 
+### Subscription
+
+You can subscribe to real-time events using [`BLPData.subscribe`](@ref).
+
+```julia
+topic = "//blp/mktdata/ticker/PETR4 BS Equity?fields=BID,ASK"
+subscription_list = BLPData.subscribe(session, topic)
+
+i = 1 # event counter
+evn = BLPData.try_next_event(session)
+while evn != nothing
+    println("event \$i")
+    println(evn)
+    i += 1
+    sleep(2) # let's wait for events
+    evn = BLPData.try_next_event(session)
+end
+
+BLPData.unsubscribe(session, subscription_list)
+```
+
 ## Contributing
 
 Contributions are always welcome!

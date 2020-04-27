@@ -92,11 +92,19 @@ See also [`unsubscribe`](@ref), [`SubscriptionList`](@ref).
 
 ```julia
 topic = "//blp/mktdata/ticker/PETR4 BS Equity?fields=BID,ASK"
-sublist = BLPData.subscribe(session, topic)
-sleep(1) # force a wait for events
+subscription_list = BLPData.subscribe(session, topic)
+
+i = 1 # event counter
 evn = BLPData.try_next_event(session)
-println(evn)
-BLPData.unsubscribe(session, sublist)
+while evn != nothing
+    println("event \$i")
+    println(evn)
+    i += 1
+    sleep(2) # let's wait for events
+    evn = BLPData.try_next_event(session)
+end
+
+BLPData.unsubscribe(session, subscription_list)
 ```
 """
 function subscribe(session::Session, topics::Vector{T}) :: SubscriptionList where {T<:AbstractString}
