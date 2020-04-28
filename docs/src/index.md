@@ -124,7 +124,7 @@ end
 h, s = bdh_and_bds_async()
 ```
 
-### Subscription
+## Subscription
 
 You can subscribe to real-time events using [`BLPData.subscribe`](@ref).
 
@@ -144,6 +144,25 @@ end
 
 BLPData.unsubscribe(session, subscription_list)
 ```
+
+## Service and Operation Schema discovery
+
+A `Session` provides the connection to the BLPAPI.
+From a `Session` you can navigate to a `Service`,
+which provides access to API data thru an `Operation`.
+
+From an `Operation` you can query for the schema definition
+of the operation request.
+
+```julia
+session = BLPData.Session()
+service = session["//blp/refdata"]
+println(BLPData.list_operation_names(service))
+operation = service["HistoricalDataRequest"]
+println(operation)
+```
+
+It is also possible to query schemas from incomming response events.
 
 ## Getting Help and Contributing
 

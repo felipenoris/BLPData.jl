@@ -1,6 +1,7 @@
 
 @testset "Session" begin
     session = BLPData.Session(service_download_timeout_msecs=2000)
+    BLPData.get_opened_services_names(session) == BLPData.DEFAULT_SERVICE_NAMES
     @test session.handle != C_NULL
     BLPData.stop(session)
     BLPData.destroy!(session)
@@ -11,10 +12,7 @@ end
 SESSION = BLPData.Session()
 
 @testset "Subscribe" begin
-    subscription_string = "//blp/mktdata/ticker/PETR4 BS Equity?fields=BID,ASK"
-    sublist = BLPData.SubscriptionList()
-    topic = push!(sublist, subscription_string)
-    BLPData.subscribe(SESSION, sublist)
+    sublist = BLPData.subscribe(SESSION, "//blp/mktdata/ticker/PETR4 BS Equity?fields=BID,ASK")
     BLPData.unsubscribe(SESSION, sublist)
 end
 

@@ -45,7 +45,43 @@ get_server_host(opt::SessionOptions) = unsafe_string(blpapi_SessionOptions_serve
 get_server_port(opt::SessionOptions) = blpapi_SessionOptions_serverPort(opt.handle)
 get_client_mode(opt::SessionOptions) = ClientMode(blpapi_SessionOptions_clientMode(opt.handle))
 
+"""
+List of service names that the default `Session` constructor uses.
+See also [`Session`](@ref).
+
+```julia
+julia> BLPData.Session()
+Session services available: Set(["//blp/refdata", "//blp/mktdata"])
+
+julia> BLPData.DEFAULT_SERVICE_NAMES
+Set{String} with 2 elements:
+  "//blp/refdata"
+  "//blp/mktdata"
+```
+"""
 const DEFAULT_SERVICE_NAMES = Set(["//blp/mktdata", "//blp/refdata"])
+
+"""
+List of all serice names based on the BLPAPI documentation.
+See also [`Session`](@ref).
+
+```julia
+julia> session = BLPData.Session(BLPData.ALL_SERVICE_NAMES)
+Session services available: Set(["//blp/mktlist", "//blp/mktdata", "//blp/mktdepthdata", "//blp/instruments", "//blp/pagedata", "//blp/mktvwap", "//blp/mktbar", "//blp/refdata", "//blp/irdctk3", "//blp/tasvc", "//blp/srcref", "//blp/apiflds"])
+```
+"""
+const ALL_SERVICE_NAMES = union(DEFAULT_SERVICE_NAMES, Set([
+        "//blp/srcref",
+        "//blp/mktvwap",
+        "//blp/mktdepthdata",
+        "//blp/mktbar",
+        "//blp/mktlist",
+        "//blp/apiflds",
+        "//blp/instruments",
+        "//blp/pagedata",
+        "//blp/tasvc",
+        "//blp/irdctk3"
+    ]))
 
 function service_name_str(service_name::AbstractString) :: String
     @assert length(service_name) >= 2 "Short service name `$(service_name)`"
@@ -72,7 +108,7 @@ const DEFAULT_SESSION_START_TIMEOUT_MSECS = UInt32(5000) # 5 secs
 
 Creates a new session for Bloomberg API.
 
-See also [`stop`](@ref), [`ClientMode`](@ref).
+See also [`stop`](@ref), [`ClientMode`](@ref), [`DEFAULT_SERVICE_NAMES`](@ref), [`ALL_SERVICE_NAMES`](@ref).
 
 # Example
 
@@ -282,3 +318,12 @@ function try_next_event(session::Session) :: Union{Nothing, Event}
 end
 
 Base.getindex(session::Session, service_name::AbstractString) = Service(session, service_name)
+
+"""
+    get_opened_services_names(session::Session) :: Set{String}
+
+Returns the set of names for opened services for this `session`.
+"""
+function get_opened_services_names(session::Session) :: Set{String}
+    return deepcopy(session.opened_services)
+end

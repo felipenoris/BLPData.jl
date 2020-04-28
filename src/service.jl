@@ -44,8 +44,6 @@ end
     list_operation_names(service::Service) :: Vector{String}
 
 List operation names available for `service`.
-
-See also [`get_operation`](@ref).
 """
 function list_operation_names(service::Service) :: Vector{String}
     num_operations = get_num_operations(service)

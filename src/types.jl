@@ -138,6 +138,19 @@ mutable struct CorrelationId
     value::CorrelationValue
 end
 
+"""
+A `Service` provides access to API data.
+A service is obtained from a [`Session`](@ref)
+and gives access to operations.
+
+```julia
+session = BLPData.Session()
+service = session["//blp/refdata"]
+println(BLPData.list_operation_names(service))
+operation = service["HistoricalDataRequest"]
+println(operation)
+```
+"""
 mutable struct Service
     handle::Ptr{Cvoid}
     name::String
