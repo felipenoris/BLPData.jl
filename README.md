@@ -31,7 +31,7 @@ available from the API.
 
 * Julia v1.4 or newer.
 
-* Windows, Linux or macOS.
+* Windows, Linux, or macOS.
 
 ## Installation
 
