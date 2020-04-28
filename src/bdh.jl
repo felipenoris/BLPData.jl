@@ -34,7 +34,7 @@ See also [`bds`](@ref).
 
 # Arguments
 
-* `fields` is either a single string or an array of string values.
+* `fields` argument is either a single string or an array of string values.
 
 * `options` argument expects a key->value pairs or a `Dict`.
 

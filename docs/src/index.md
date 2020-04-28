@@ -15,7 +15,7 @@ available from the API.
 
 * Julia v1.4 or newer.
 
-* Windows, Linux or macOS.
+* Windows, Linux, or macOS.
 
 ## Installation
 
@@ -39,7 +39,7 @@ julia> session = BLPData.Session()
 Session services available: Set(["//blp/refdata", "//blp/mktdata"])
 ```
 
-From a running session, use [`BLPData.bdp`](@ref) to get the lastest data on a given security or list of securities.
+From a running session, use [`BLPData.bdp`](@ref) to get the latest data on a given security or list of securities.
 
 ```julia
 julia> BLPData.bdp(session, "PETR4 BS Equity", "PX_LAST")
@@ -163,9 +163,11 @@ println(operation)
 ```
 
 The `Request` structure is used to send a request related to
-some operation. From a `Request` it is possible to create an `Element`,
+some `Operation`. From a `Request` it is possible to create an `Element`,
 which is the generic data structure to send and receive data from BLPAPI.
 Each `Element` has its own schema.
+
+The following example inspects each step in the request done by [`BLPData.bdh_intraday_ticks`](@ref).
 
 ```julia
 # create a request
@@ -178,8 +180,8 @@ println(schema)
 
 # fill data in the request
 req["security"] = "PETR4 BS Equity"
-req["startDateTime"] = DateTime(2020, 4, 27, 13)
-req["endDateTime"] = DateTime(2020, 4, 27, 13, 2)
+req["startDateTime"] = DateTime(2020, 4, 27, 13)  # from 2020-04-27 13:00
+req["endDateTime"] = DateTime(2020, 4, 27, 13, 2) #   to 2020-04-27 13:02
 append!(req["eventTypes"], [ "TRADE", "BID", "ASK" ])
 
 # send request
