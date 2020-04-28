@@ -88,3 +88,5 @@ function BLPDateTime(dt::Dates.Date)
             0
         )
 end
+
+BLPDateTime(x::BLPDateTime) = x

@@ -39,7 +39,7 @@ julia> session = BLPData.Session()
 Session services available: Set(["//blp/refdata", "//blp/mktdata"])
 ```
 
-From a running session, use `BLPData.bdp` to get the lastest data on a given security or list of securities.
+From a running session, use [`BLPData.bdp`](@ref) to get the lastest data on a given security or list of securities.
 
 ```julia
 julia> BLPData.bdp(session, "PETR4 BS Equity", "PX_LAST")
@@ -54,7 +54,7 @@ Dict{Any,Any} with 2 entries:
   "VALE3 BS Equity" => (PX_LAST = 43.76, VOLUME = 5.49037e7)
 ```
 
-For bulk data, use `BLPData.bds`.
+For bulk data, use [`BLPData.bds`](@ref).
 
 ```julia
 julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
@@ -68,7 +68,7 @@ julia> DataFrame( BLPData.bds(session, "PETR4 BS Equity", "COMPANY_ADDRESS") )
 │ 4   │ Brazil                       │
 ```
 
-For historical data, use `BLPData.bdh`.
+For historical data, use [`BLPData.bdh`](@ref). There is also [`BLPData.bdh_intraday_ticks`](@ref) for intraday ticks.
 
 ```julia
 julia> DataFrame( BLPData.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"], Date(2020, 1, 2), Date(2020, 1, 10) ))
@@ -85,7 +85,7 @@ julia> DataFrame( BLPData.bdh(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"],
 │ 7   │ 2020-01-10 │ 30.27   │ 2.53975e7 │
 ```
 
-When you're done with a session, you can close it with `BLPData.stop`.
+When you're done with a session, you can close it with [`BLPData.stop`](@ref).
 
 ```julia
 julia> BLPData.stop(session)
@@ -162,7 +162,42 @@ operation = service["HistoricalDataRequest"]
 println(operation)
 ```
 
-It is also possible to query schemas from incomming response events.
+The `Request` structure is used to send a request related to
+some operation. From a `Request` it is possible to create an `Element`,
+which is the generic data structure to send and receive data from BLPAPI.
+Each `Element` has its own schema.
+
+```julia
+# create a request
+request = BLPData.Request(session, "//blp/refdata", "IntradayTickRequest")
+req_element = BLPData.Element(request)
+
+# inspect request's schema
+schema = BLPData.SchemaElementDefinition(req_element)
+println(schema)
+
+# fill data in the request
+req["security"] = "PETR4 BS Equity"
+req["startDateTime"] = DateTime(2020, 4, 27, 13)
+req["endDateTime"] = DateTime(2020, 4, 27, 13, 2)
+append!(req["eventTypes"], [ "TRADE", "BID", "ASK" ])
+
+# send request
+queue, corr_id = BLPData.send_request(req)
+
+# gets the response
+response_event = BLPData.try_next_event(queue)
+
+# inspect response schema
+itr = BLPData.MessageIterator(response_event)
+item, state = iterate(itr)
+element = BLPData.Element(item)
+schema = BLPData.SchemaElementDefinition(element)
+println(schema)
+
+# show response data
+println(element)
+```
 
 ## Getting Help and Contributing
 

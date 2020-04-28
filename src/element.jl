@@ -79,96 +79,6 @@ Base.getindex(element::AbstractElement{false,BLPAPI_DATATYPE_CHOICE}) = get_choi
     error("Base.haskey not implemented for element with datatype $D.")
 end
 
-@generated function Base.push!(element::Element{true,D}, val::V) where {D,V}
-    if D == BLPAPI_DATATYPE_STRING
-        return quote
-            err = blpapi_Element_setValueString(element.handle, blpstring(val), BLPAPI_ELEMENT_INDEX_END)
-            error_check(err, "Failed to push value $val to element $(element.name)")
-        end
-    end
-
-    error("push! not implemented for datatype $D.")
-end
-
-function Base.push!(element::Element, vals...)
-    for val in vals
-        push!(element, val)
-    end
-end
-
-Base.append!(element::Element{true}, vals::Vector) = push!(element, vals...)
-
-# allows `element[] = val`, when element is not an array
-@generated function Base.setindex!(element::Element{false,D}, val::V) where {D,V}
-    if D == BLPAPI_DATATYPE_STRING
-        return quote
-            err = blpapi_Element_setValueString(element.handle, blpstring(val), 0)
-            error_check(err, "Failed to push value $val to element $(element.name)")
-        end
-
-    elseif D == BLPAPI_DATATYPE_BOOL
-        @assert val == Bool "Can't set value of type $val to element of type $D."
-        return quote
-            err = blpapi_Element_setValueBool(element.handle, val, 0)
-            error_check(err, "Failed to push value $val to element $(element.name)")
-        end
-
-    elseif D == BLPAPI_DATATYPE_ENUMERATION
-        # for enums, we need to check the value type informed by the element's schema
-        # and also if the value is allowed for the field
-        return quote
-            schema = SchemaElementDefinition(element)
-            schema_type = schema.schema_type
-            @assert isa(schema_type, EnumerationSchemaTypeDefinition)
-
-            if schema_type.enumeration.datatype == BLPAPI_DATATYPE_STRING
-                val_str = blpstring(val)
-                @assert is_value_allowed(element, val_str) "Unvalid value for enum `$(element.name)`: `$val_str`. Options are: $(list_enum_options(element))"
-
-                err = blpapi_Element_setValueString(element.handle, val_str, 0)
-                error_check(err, "Failed to push value $val_str to element $(element.name)")
-            end
-        end
-    end
-
-    error("setindex! not implemented for datatype $D.")
-end
-
-function is_value_allowed(element::Element{false,BLPAPI_DATATYPE_ENUMERATION}, val)
-    schema = SchemaElementDefinition(element)
-    schema_type = schema.schema_type
-    @assert isa(schema_type, EnumerationSchemaTypeDefinition)
-
-    # check wether val is allowed for this enum
-    val_is_allowed = false
-    for enum_const in schema_type.enumeration.list
-        if enum_const.value == val
-            val_is_allowed = true
-            break
-        end
-    end
-
-    return val_is_allowed
-end
-
-function list_enum_options(element::Element{false, BLPAPI_DATATYPE_ENUMERATION})
-    schema = SchemaElementDefinition(element)
-    schema_type = schema.schema_type
-    @assert isa(schema_type, EnumerationSchemaTypeDefinition)
-    return [ enum_const.value for enum_const in schema_type.enumeration.list ]
-end
-
-# allows `element["child_element_name"] = val`, when element is complex and not an array
-@generated function Base.setindex!(element::Element{false,D}, val::V, name::AbstractString) where {D,V}
-    if is_complex_datatype(D)
-        return quote
-            child_element = element[name]
-            child_element[] = val
-            nothing
-        end
-    end
-end
-
 struct ChildElementsIterator{T<:AbstractElement{false,BLPAPI_DATATYPE_SEQUENCE}}
     element::T
     num_elements::Csize_t
@@ -328,7 +238,7 @@ end
             buffer_ref = Ref{Ptr{Cvoid}}(C_NULL)
             err = blpapi_Element_getValueAsName(element.handle, buffer_ref, index-1)
             error_check(err, "Failed to get BLPName element value from Enumeration")
-            return BLPName(buffer_ref[])
+            return Symbol(BLPName(buffer_ref[]))
         end
 
     else
@@ -342,6 +252,104 @@ end
             $parse_value_block
         end
     end
+end
+
+@generated function set_element_value!(element::AbstractElement{A,D}, val::V, index::Integer) where {A,D,V}
+    if D == BLPAPI_DATATYPE_STRING
+        return quote
+            err = blpapi_Element_setValueString(element.handle, blpstring(val), index)
+            error_check(err, "Failed to push value $val to element $(element.name)")
+        end
+
+    elseif D == BLPAPI_DATATYPE_BOOL
+        @assert val == Bool "Can't set value of type $val to element of type $D."
+        return quote
+            err = blpapi_Element_setValueBool(element.handle, val, index)
+            error_check(err, "Failed to push value $val to element $(element.name)")
+        end
+
+    elseif D == BLPAPI_DATATYPE_ENUMERATION
+        # for enums, we need to check the value type informed by the element's schema
+        # and also if the value is allowed for the field
+        return quote
+            schema = SchemaElementDefinition(element)
+            schema_type = schema.schema_type
+            @assert isa(schema_type, EnumerationSchemaTypeDefinition)
+
+            if schema_type.enumeration.datatype == BLPAPI_DATATYPE_STRING
+                val_str = blpstring(val)
+                @assert is_value_allowed(element, val_str) "Unvalid value for enum `$(element.name)`: `$val_str`. Options are: $(list_enum_options(element))"
+
+                err = blpapi_Element_setValueString(element.handle, val_str, index)
+                error_check(err, "Failed to push value $val_str to element $(element.name)")
+            else
+                error("enumeration datatype not supported: $(schema_type.enumeration.datatype)")
+            end
+        end
+    elseif D == BLPAPI_DATATYPE_DATETIME
+        @assert val == BLPDateTime || val == DateTime || val == Date
+
+        return quote
+            err = blpapi_Element_setValueDatetime(element.handle, BLPDateTime(val), index)
+            error_check(err, "Failed to push value $val to element $(element.name)")
+        end
+    end
+
+    error("set_element_value! not implemented for datatype $D.")
+end
+
+# allows `element[] = val`, when element is not an array
+function Base.setindex!(element::Element{false,D}, val::V) where {D,V}
+    set_element_value!(element, val, 0)
+end
+
+function is_value_allowed(element::Element{A, BLPAPI_DATATYPE_ENUMERATION}, val) where {A}
+    schema = SchemaElementDefinition(element)
+    schema_type = schema.schema_type
+    @assert isa(schema_type, EnumerationSchemaTypeDefinition)
+
+    # check wether val is allowed for this enum
+    val_is_allowed = false
+    for enum_const in schema_type.enumeration.list
+        if enum_const.value == val
+            val_is_allowed = true
+            break
+        end
+    end
+
+    return val_is_allowed
+end
+
+function list_enum_options(element::Element{A, BLPAPI_DATATYPE_ENUMERATION}) where {A}
+    schema = SchemaElementDefinition(element)
+    schema_type = schema.schema_type
+    @assert isa(schema_type, EnumerationSchemaTypeDefinition)
+    return [ enum_const.value for enum_const in schema_type.enumeration.list ]
+end
+
+function Base.push!(element::Element{true,D}, val::V) where {D,V}
+    set_element_value!(element, val, BLPAPI_ELEMENT_INDEX_END)
+end
+
+function Base.push!(element::Element, vals...)
+    for val in vals
+        push!(element, val)
+    end
+end
+
+Base.append!(element::Element{true}, vals::Vector) = push!(element, vals...)
+
+# allows `element["child_element_name"] = val`, when element is complex and not an array
+@generated function Base.setindex!(element::Element{false,D}, val::V, name::AbstractString) where {D,V}
+    if is_complex_datatype(D)
+        return quote
+            child_element = element[name]
+            child_element[] = val
+            nothing
+        end
+    end
+
+    error("setindex! not implemented for datatype $D.")
 end
 
 function is_null_value(element::AbstractElement, index::Integer)
