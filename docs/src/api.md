@@ -11,6 +11,7 @@ BLPData.ClientMode
 BLPData.Service
 BLPData.list_operation_names
 BLPData.bdh
+BLPData.bdh_intraday_ticks
 BLPData.bds
 BLPData.bdp
 BLPData.get_version_info

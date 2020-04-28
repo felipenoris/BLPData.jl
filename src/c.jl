@@ -590,6 +590,14 @@ function blpapi_Element_setValueBool(element_handle::Ptr{Cvoid}, value::Bool, in
     ccall((:blpapi_Element_setValueBool, libblpapi3), Cint, (Ptr{Cvoid}, Cint, Csize_t), element_handle, value, index)
 end
 
+#int blpapi_Element_setValueDatetime(
+#        blpapi_Element_t *element,
+#        const blpapi_Datetime_t *value,
+#        size_t index);
+function blpapi_Element_setValueDatetime(element_handle::Ptr{Cvoid}, value::BLPDateTime, index::Integer)
+    ccall((:blpapi_Element_setValueDatetime, libblpapi3), Cint, (Ptr{Cvoid}, Ref{BLPDateTime}, Csize_t), element_handle, Ref(value), index)
+end
+
 #BLPAPI_EXPORT size_t blpapi_Element_numElements(
 #        const blpapi_Element_t* element);
 function blpapi_Element_numElements(element_handle::Ptr{Cvoid})

@@ -148,6 +148,40 @@ end
     end
 end
 
+@testset "bdh_intraday_ticks" begin
+    @testset "Single security one field" begin
+        d0 = DateTime(2020, 4, 27, 13)
+        d1 = DateTime(2020, 4, 27, 13, 5)
+        res = BLPData.bdh_intraday_ticks(SESSION, "PETR4 BS Equity", ["ASK"], d0, d1)
+        @test length(res) > 10
+        @test length(res) < 30 # 20 max
+        for t in res
+            @test t.type == :ASK
+        end
+    end
+
+    @testset "Single security multiple fields" begin
+        d0 = DateTime(2020, 4, 27, 13)
+        d1 = DateTime(2020, 4, 27, 13, 5)
+        res = BLPData.bdh_intraday_ticks(SESSION, "PETR4 BS Equity", ["TRADE", "BID", "ASK"], d0, d1)
+        @test length(res) > 10
+        @test length(res) < 50
+        show(DataFrame(res))
+    end
+
+    @testset "Multiple securities" begin
+        d0 = DateTime(2020, 4, 27, 13)
+        d1 = DateTime(2020, 4, 27, 13, 5)
+        res = BLPData.bdh_intraday_ticks(SESSION, ["PETR4 BS Equity", "VALE3 BS Equity"], ["TRADE", "BID", "ASK"], d0, d1)
+        @test haskey(res, "PETR4 BS Equity")
+        @test haskey(res, "VALE3 BS Equity")
+        @test length(res["PETR4 BS Equity"]) > 10
+        @test length(res["PETR4 BS Equity"]) < 50
+        @test length(res["VALE3 BS Equity"]) > 10
+        @test length(res["VALE3 BS Equity"]) < 40
+    end
+end
+
 @testset "bds" begin
     @testset "COMPANY_ADDRESS" begin
         df = DataFrame(BLPData.bds(SESSION, "PETR4 BS Equity", "COMPANY_ADDRESS"))
