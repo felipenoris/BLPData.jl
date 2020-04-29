@@ -81,10 +81,23 @@ end
             @test isa(v[:VOLUME], Number)
         end
     end
+
+    @testset "Invalid security" begin
+        invalid_security = "INVALID SECURITY NAME"
+        @test_throws BLPData.BLPResultErrException BLPData.bdp(SESSION, invalid_security, "TICKER")
+
+        try
+            BLPData.bdp(SESSION, invalid_security, "TICKER")
+        catch err
+            @test err.err.code == 3
+            @test err.err.category == "BAD_SEC"
+            @test err.err.subcategory == "INVALID_SECURITY"
+        end
+    end
 end
 
 @testset "bdh" begin
-    @time result = BLPData.bdh(SESSION, "IBM US Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
+    result = BLPData.bdh(SESSION, "IBM US Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
     df = DataFrame(result)
     @test DataFrames.names(df) == [ :date, :PX_LAST, :VWAP_VOLUME ]
     @test size(df) == (20, 3)
@@ -262,6 +275,32 @@ end
             end
         end
     end
+
+    @testset "bdp multiple securities" begin
+        println("bdp multiple securities")
+        @time result = BLPData.bdp(SESSION, tickers, ["PX_LAST", "VOLUME"])
+        @test isa(result, Dict)
+
+        for ticker in tickers
+            @test haskey(result, ticker)
+            @test isa(result[ticker], NamedTuple)
+            @test isa(result[ticker].PX_LAST, Number)
+            @test isa(result[ticker].VOLUME, Number)
+        end
+    end
 end
 
 BLPData.stop(SESSION)
+
+#=
+single ticker benchmark
+  0.307588 seconds (3.17 k allocations: 157.469 KiB)
+Async bds benchmark
+  0.663622 seconds (1.05 M allocations: 53.663 MiB, 1.94% gc time)
+Async bdh benchmark
+  0.519487 seconds (56.87 k allocations: 2.859 MiB)
+Async bdh benchmark
+  0.318764 seconds (31.38 k allocations: 1.526 MiB)
+bdp multiple securities
+  0.356546 seconds (1.70 k allocations: 93.312 KiB)
+=#
