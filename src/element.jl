@@ -59,24 +59,29 @@ end
 end
 
 has_name(element::Element, name) = has_name(element.name, name)
+get_name(element::Element) = element.name
 
 function get_choice(element::AbstractElement{false,BLPAPI_DATATYPE_CHOICE})
     result_element_handle_ref = Ref{Ptr{Cvoid}}(C_NULL)
     err = blpapi_Element_getChoice(element.handle, result_element_handle_ref)
-    error_check(err, "Failed to get choice from $(element.name)")
+    error_check(err, "Failed to get choice from $(get_name(element))")
     return Element(result_element_handle_ref[], element)
 end
 
 Base.getindex(element::AbstractElement{false,BLPAPI_DATATYPE_CHOICE}) = get_choice(element)
 
-@generated function Base.haskey(element::AbstractElement{false,D}, name::AbstractString) :: Bool where {D}
+@generated function has_child_element(element::AbstractElement{false,D}, name::AbstractString) :: Bool where {D}
     if is_complex_datatype(D)
         return quote
             return blpapi_Element_hasElement(element.handle, pointer(name), C_NULL) != 0
         end
     end
 
-    error("Base.haskey not implemented for element with datatype $D.")
+    error("has_child_element not implemented for element with datatype $D.")
+end
+
+function Base.haskey(element::AbstractElement{false,D}, name::AbstractString) :: Bool where {D}
+    has_child_element(element, name)
 end
 
 struct ChildElementsIterator{T<:AbstractElement{false,BLPAPI_DATATYPE_SEQUENCE}}
@@ -84,7 +89,7 @@ struct ChildElementsIterator{T<:AbstractElement{false,BLPAPI_DATATYPE_SEQUENCE}}
     num_elements::Csize_t
 end
 
-function each_child_element(element::T) where {T<:AbstractElement{false,BLPAPI_DATATYPE_SEQUENCE}}
+function each_child_element(element::T) where {T<:AbstractElement{false, BLPAPI_DATATYPE_SEQUENCE}}
     ChildElementsIterator(element, blpapi_Element_numElements(element.handle))
 end
 
@@ -258,14 +263,49 @@ end
     if D == BLPAPI_DATATYPE_STRING
         return quote
             err = blpapi_Element_setValueString(element.handle, blpstring(val), index)
-            error_check(err, "Failed to push value $val to element $(element.name)")
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
         end
 
     elseif D == BLPAPI_DATATYPE_BOOL
         @assert val == Bool "Can't set value of type $val to element of type $D."
         return quote
             err = blpapi_Element_setValueBool(element.handle, val, index)
-            error_check(err, "Failed to push value $val to element $(element.name)")
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
+        end
+
+    elseif D == BLPAPI_DATATYPE_INT32
+        @assert val <: Integer
+        return quote
+            err = blpapi_Element_setValueInt32(element.handle, Int32(val), index)
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
+        end
+
+    elseif D == BLPAPI_DATATYPE_INT64
+        @assert val <: Integer
+        return quote
+            err = blpapi_Element_setValueInt64(element.handle, Int64(val), index)
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
+        end
+
+    elseif D == BLPAPI_DATATYPE_FLOAT32
+        @assert val <: Number
+        return quote
+            err = blpapi_Element_setValueFloat32(element.handle, Float32(val), index)
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
+        end
+
+    elseif D == BLPAPI_DATATYPE_FLOAT64
+        @assert val <: Number
+        return quote
+            err = blpapi_Element_setValueFloat64(element.handle, Float64(val), index)
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
+        end
+
+    elseif D == BLPAPI_DATATYPE_CHAR
+        @assert val == Char
+        return quote
+            err = blpapi_Element_setValueChar(element.handle, val, index)
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
         end
 
     elseif D == BLPAPI_DATATYPE_ENUMERATION
@@ -278,20 +318,21 @@ end
 
             if schema_type.enumeration.datatype == BLPAPI_DATATYPE_STRING
                 val_str = blpstring(val)
-                @assert is_value_allowed(element, val_str) "Unvalid value for enum `$(element.name)`: `$val_str`. Options are: $(list_enum_options(element))"
+                @assert is_value_allowed(element, val_str) "Unvalid value for enum `$(get_name(element))`: `$val_str`. Options are: $(list_enum_options(element))"
 
                 err = blpapi_Element_setValueString(element.handle, val_str, index)
-                error_check(err, "Failed to push value $val_str to element $(element.name)")
+                error_check(err, "Failed to push value $val_str to element $(get_name(element))")
             else
                 error("enumeration datatype not supported: $(schema_type.enumeration.datatype)")
             end
         end
-    elseif D == BLPAPI_DATATYPE_DATETIME
+
+    elseif D == BLPAPI_DATATYPE_DATETIME || D == BLPAPI_DATATYPE_DATE
         @assert val == BLPDateTime || val == DateTime || val == Date
 
         return quote
             err = blpapi_Element_setValueDatetime(element.handle, BLPDateTime(val), index)
-            error_check(err, "Failed to push value $val to element $(element.name)")
+            error_check(err, "Failed to push value $val to element $(get_name(element))")
         end
     end
 
@@ -377,12 +418,13 @@ function as_dict!(dict::Dict, root::Element{A,D}) where {A,D}
         # vector of sequences
         if A
             elements_vec = Vector()
-            dict[root.name.symbol] = elements_vec
+            root_name_symbol = Symbol(get_name(root))
+            dict[root_name_symbol] = elements_vec
             for el in get_element_value(root)
                 el_dict = Dict()
                 as_dict!(el_dict, el)
-                if length(el_dict) == 1 && haskey(el_dict, root.name.symbol)
-                    push!(elements_vec, el_dict[root.name.symbol])
+                if length(el_dict) == 1 && haskey(el_dict, root_name_symbol)
+                    push!(elements_vec, el_dict[root_name_symbol])
                 else
                     push!(elements_vec, el_dict)
                 end
@@ -390,7 +432,7 @@ function as_dict!(dict::Dict, root::Element{A,D}) where {A,D}
         else
             # a single sequence
             child_dict = Dict()
-            dict[root.name.symbol] = child_dict
+            dict[Symbol(get_name(root))] = child_dict
             for child_element in each_child_element(root)
                 as_dict!(child_dict, child_element)
             end
@@ -398,7 +440,7 @@ function as_dict!(dict::Dict, root::Element{A,D}) where {A,D}
 
     else
         @assert is_simple_datatype(D)
-        dict[root.name.symbol] = get_element_value(root)
+        dict[Symbol(get_name(root))] = get_element_value(root)
     end
 end
 
@@ -414,9 +456,9 @@ function push_named_tuples!(result::T, element_vec::Element{true, BLPAPI_DATATYP
     for element in get_element_value(element_vec)
 
         if tuple_keys == nothing
-            tuple_keys = Tuple([ child_element.name.symbol for child_element in each_child_element(element) ])
+            tuple_keys = Tuple([ Symbol(get_name(child_element)) for child_element in each_child_element(element) ])
         else
-            @assert tuple_keys == Tuple([ child_element.name.symbol for child_element in each_child_element(element) ])
+            @assert tuple_keys == Tuple([ Symbol(get_name(child_element)) for child_element in each_child_element(element) ])
         end
 
         tuple_values = Tuple([ get_element_value(child_element) for child_element in each_child_element(element) ])
@@ -424,4 +466,4 @@ function push_named_tuples!(result::T, element_vec::Element{true, BLPAPI_DATATYP
     end
 end
 
-to_named_tuple(element::Element{false, BLPAPI_DATATYPE_SEQUENCE}) = (; [ (child_element.name.symbol, get_element_value(child_element)) for child_element in each_child_element(element) ]...)
+to_named_tuple(element::Element{false, BLPAPI_DATATYPE_SEQUENCE}) = (; [ (Symbol(get_name(child_element)), get_element_value(child_element)) for child_element in each_child_element(element) ]...)

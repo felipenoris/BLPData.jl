@@ -75,6 +75,69 @@ end
     BLPAPI_EVENTTYPE_REQUEST               = 15
 end
 
+abstract type BLPResult end
+abstract type BLPResultOk <: BLPResult end
+abstract type BLPResultErr <: BLPResult end
+abstract type BLPException <: Exception end
+
+struct NamedTupleResult{T<:NamedTuple} <: BLPResultOk
+    result::T
+end
+
+struct BLPTimeoutException <: BLPException
+    timeout_milliseconds::UInt32
+end
+
+struct BLPResponseException <: BLPException
+    msg::String
+end
+
+# Tells the user to file an issue on Github
+struct BLPUnknownException <: BLPException
+    cause::String
+end
+
+struct SecurityErr <: BLPResultErr
+    security::String
+    source::String
+    code::Int32
+    category::String
+    subcategory::String
+    message::String
+end
+
+mutable struct FieldErr <: BLPResultErr
+    security::String
+    field::Symbol
+    source::String
+    code::Int32
+    category::String
+    subcategory::String
+    message::String
+end
+
+struct BLPResultErrException{T<:BLPResultErr} <: BLPException
+    err::T
+end
+
+"""
+# Unwrap
+
+If BLPResult holds an Err, panics.
+If BLPResult holds Ok result, returns underlying result.
+
+# NoUnwrap
+
+Always returns the BLPResult itself.
+"""
+abstract type ErrorHandling end
+
+struct Unwrap <: ErrorHandling
+end
+
+struct NoUnwrap <: ErrorHandling
+end
+
 """
 Represents the library version in use for Bloomberg API.
 

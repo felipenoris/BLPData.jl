@@ -46,37 +46,42 @@ function for_each_response_message_element(f::Function, queue::EventQueue, corr_
 
         response_event = next_event(queue, timeout_milliseconds=timeout_milliseconds)
 
-        if response_event.event_type == BLPAPI_EVENTTYPE_TIMEOUT
-            error("Response Timeout.")
+        try
+            if response_event.event_type == BLPAPI_EVENTTYPE_TIMEOUT
+                throw(BLPTimeoutException(timeout_milliseconds))
 
-        elseif response_event.event_type == BLPAPI_EVENTTYPE_REQUEST_STATUS
-            error("Request Error: $response_event.")
-        end
-
-        @assert response_event.event_type == BLPAPI_EVENTTYPE_RESPONSE || response_event.event_type == BLPAPI_EVENTTYPE_PARTIAL_RESPONSE "Tried to handle non-response event of type $(response_event.event_type)."
-
-        # process BLPAPI_EVENTTYPE_RESPONSE or BLPAPI_EVENTTYPE_PARTIAL_RESPONSE
-        verbose && @info("Reading messages from event $(response_event.event_type)")
-        for message in each_message(response_event)
-            check_has_correlation_id(message, corr_id)
-            element = Element(message)
-
-            if verbose
-                println("Reponse Element Schema")
-                println(SchemaElementDefinition(element))
+            elseif response_event.event_type == BLPAPI_EVENTTYPE_REQUEST_STATUS
+                throw(BLPResponseException("Got response with type $(response_event.event_type): $response_event"))
             end
 
-            f(Element(message))
-        end
+            if !(response_event.event_type == BLPAPI_EVENTTYPE_RESPONSE || response_event.event_type == BLPAPI_EVENTTYPE_PARTIAL_RESPONSE)
+                throw(BLPUnknownException("Tried to handle non-response event of type $(response_event.event_type)."))
+            end
 
-        # check if response is complete
-        if response_event.event_type == BLPAPI_EVENTTYPE_RESPONSE
-            verbose && @info("Finished reading events")
-            break
-        end
+            # process BLPAPI_EVENTTYPE_RESPONSE or BLPAPI_EVENTTYPE_PARTIAL_RESPONSE
+            verbose && @info("Reading messages from event $(response_event.event_type)")
+            for message in each_message(response_event)
+                check_has_correlation_id(message, corr_id)
+                element = Element(message)
 
-        # destroy this event early, before GC
-        destroy!(response_event)
+                if verbose
+                    println("Reponse Element Schema")
+                    println(SchemaElementDefinition(element))
+                end
+
+                f(element)
+            end
+
+            # check if response is complete
+            if response_event.event_type == BLPAPI_EVENTTYPE_RESPONSE
+                verbose && @info("Finished reading events")
+                break
+            end
+
+        finally
+            # destroy this event early, before GC
+            destroy!(response_event)
+        end
     end
 
     nothing

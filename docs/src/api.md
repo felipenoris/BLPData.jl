@@ -10,6 +10,12 @@ BLPData.bds
 BLPData.bdp
 ```
 
+## Error Handling
+
+```@docs
+BLPData.ErrorHandling
+```
+
 ## Session, Services and Events
 
 ```@docs

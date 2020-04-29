@@ -6,6 +6,7 @@ using Printf
 
 include("deps.jl")
 include("types.jl")
+include("results.jl")
 include("correlation_id.jl")
 include("datetime.jl")
 include("c.jl")

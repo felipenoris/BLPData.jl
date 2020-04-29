@@ -81,10 +81,11 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
-            timeout_milliseconds::Integer=UInt32(0)
+            timeout_milliseconds::Integer=UInt32(0),
+            error_handling::ErrorHandling=Unwrap()
         ) where {T<:AbstractString}
 
-    @assert !isempty(fields) "Fields vector is empty."
+    @assert !isempty(fields) "Fields vector should not be empty."
 
     queue, corr_id = send_request(session, "//blp/refdata", "HistoricalDataRequest") do req
         push!(req["securities"], security)
@@ -107,20 +108,28 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
     result = Vector()
 
     for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
-        @assert has_name(element, "HistoricalDataResponse")
+
+        if !has_name(element, "HistoricalDataResponse")
+            throw(BLPUnknownException("Expected response element with name HistoricalDataResponse. Got $(get_name(element))."))
+        end
+
         response_element = get_choice(element)
 
         if has_name(response_element, "responseError")
-            error("Got responseError. \n$response_element")
+            throw(BLPResponseException("Got responseError. \n$response_element"))
         end
 
-        @assert has_name(response_element, "securityData")
+        if !has_name(response_element, "securityData")
+            throw(BLPUnknownException("Expected response_element with name `securityData`. Got `$(get_name(response_element))`."))
+        end
+
         @assert get_element_value(response_element["security"]) == security
         field_data_element_array = response_element["fieldData"]
         @assert isa(field_data_element_array, Element{true, BLPAPI_DATATYPE_SEQUENCE})
         push_named_tuples!(result, field_data_element_array)
     end
 
+    #return unwrap(error_handling, result)
     return result
 end
 
