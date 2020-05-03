@@ -84,6 +84,11 @@ struct NamedTupleResult{T<:NamedTuple} <: BLPResultOk
     result::T
 end
 
+struct FieldDataVecResult{T} <: BLPResultOk
+    field_exceptions::Dict{Symbol, Any}
+    field_data_vec::Vector{T}
+end
+
 struct BLPTimeoutException <: BLPException
     timeout_milliseconds::UInt32
 end
@@ -106,7 +111,7 @@ struct SecurityErr <: BLPResultErr
     message::String
 end
 
-mutable struct FieldErr <: BLPResultErr
+struct FieldErr <: BLPResultErr
     security::String
     field::Symbol
     source::String

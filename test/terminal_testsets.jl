@@ -116,6 +116,17 @@ end
         @test size(df) == (2, 2)
     end
 
+    @testset "Exceptions" begin
+        @test_throws BLPData.BLPResultErrException BLPData.bdh(SESSION, "INVALID SECURITY Equity", "PX_LAST", Date(2020, 4, 1), Date(2020, 4, 30))
+        @test_throws BLPData.BLPResultErrException BLPData.bdh(SESSION, "PETR4 BS Equity", ["PX_LAST", "INVALID FIELD"], Date(2020, 4, 1), Date(2020, 4, 30))
+
+        @testset "NoUnwrap" begin
+            bdh_result = BLPData.bdh(SESSION, "PETR3 BS Equity", ["PX_LAST", "VOLUMExxx"], Date(2020, 4, 1), Date(2020, 4, 30), error_handling=BLPData.NoUnwrap())
+            @test ismissing(bdh_result.field_data_vec[1].result.VOLUMExxx)
+            @test isa(bdh_result.field_exceptions[:VOLUMExxx], BLPData.FieldErr)
+        end
+    end
+
     @testset "historical price" begin
         ticker = "PETR4 BS Equity"
         fields = [ "PX_LAST", "TURNOVER", "PX_BID", "PX_ASK", "EQY_WEIGHTED_AVG_PX", "EXCHANGE_VWAP" ]
@@ -294,13 +305,13 @@ BLPData.stop(SESSION)
 
 #=
 single ticker benchmark
-  0.307588 seconds (3.17 k allocations: 157.469 KiB)
+  0.294486 seconds (1.99 k allocations: 99.656 KiB)
 Async bds benchmark
-  0.663622 seconds (1.05 M allocations: 53.663 MiB, 1.94% gc time)
+  0.584568 seconds (1.05 M allocations: 53.660 MiB, 1.98% gc time)
 Async bdh benchmark
-  0.519487 seconds (56.87 k allocations: 2.859 MiB)
+  0.334141 seconds (31.69 k allocations: 1.558 MiB, 4.23% gc time)
 Async bdh benchmark
-  0.318764 seconds (31.38 k allocations: 1.526 MiB)
+  0.333756 seconds (20.68 k allocations: 1.030 MiB)
 bdp multiple securities
-  0.356546 seconds (1.70 k allocations: 93.312 KiB)
+  0.418478 seconds (1.70 k allocations: 93.312 KiB)
 =#

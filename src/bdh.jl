@@ -3,20 +3,22 @@ function bdh(session::Session, security::AbstractString, field::AbstractString, 
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
-            timeout_milliseconds::Integer=UInt32(0)
+            timeout_milliseconds::Integer=UInt32(0),
+            error_handling::ErrorHandling=Unwrap()
         )
 
-    bdh(session, security, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds)
+    bdh(session, security, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
 end
 
 function bdh(session::Session, securities::Vector{T}, field::AbstractString, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
-            timeout_milliseconds::Integer=UInt32(0)
+            timeout_milliseconds::Integer=UInt32(0),
+            error_handling::ErrorHandling=Unwrap()
         ) where {T<:AbstractString}
 
-    bdh(session, securities, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds)
+    bdh(session, securities, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
 end
 
 """
@@ -24,7 +26,8 @@ end
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
-            timeout_milliseconds::Integer=UInt32(0)
+            timeout_milliseconds::Integer=UInt32(0),
+            error_handling::ErrorHandling=Unwrap()
 
 Runs a query for historical data. Returns a `Vector` of named tuples.
 
@@ -105,32 +108,33 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
         end
     end
 
-    result = Vector()
+    fields_with_date = init_fields_with_date(fields)
+    local result::Dict{String, Any} = Dict()
 
     for_each_response_message_element(queue, corr_id, timeout_milliseconds=timeout_milliseconds, verbose=verbose) do element
-
-        if !has_name(element, "HistoricalDataResponse")
-            throw(BLPUnknownException("Expected response element with name HistoricalDataResponse. Got $(get_name(element))."))
-        end
-
-        response_element = get_choice(element)
-
-        if has_name(response_element, "responseError")
-            throw(BLPResponseException("Got responseError. \n$response_element"))
-        end
-
-        if !has_name(response_element, "securityData")
-            throw(BLPUnknownException("Expected response_element with name `securityData`. Got `$(get_name(response_element))`."))
-        end
-
-        @assert get_element_value(response_element["security"]) == security
-        field_data_element_array = response_element["fieldData"]
-        @assert isa(field_data_element_array, Element{true, BLPAPI_DATATYPE_SEQUENCE})
-        push_named_tuples!(result, field_data_element_array)
+        parse_historical_data_response_into!(element, result, security, fields_with_date, error_handling)
     end
 
-    #return unwrap(error_handling, result)
+    return result[security]
+end
+
+function init_fields_with_date_into!(fields::Vector, result::Vector)
+    @assert length(result) == length(fields) + 1
+    result[1] = "date"
+    for i in 1:length(fields)
+        result[i+1] = fields[i]
+    end
     return result
+end
+
+function init_fields_with_date(fields::Vector{String}) :: Vector{String}
+    result = Vector{String}(undef, length(fields)+1)
+    init_fields_with_date_into!(fields, result)
+end
+
+function init_fields_with_date(fields::Vector{T}) :: Vector{AbstractString} where {T<:AbstractString}
+    result = Vector{AbstractString}(undef, length(fields)+1)
+    init_fields_with_date_into!(fields, result)
 end
 
 """
@@ -138,7 +142,8 @@ end
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
-            timeout_milliseconds::Integer=UInt32(0)
+            timeout_milliseconds::Integer=UInt32(0),
+            error_handling::ErrorHandling=Unwrap()
         ) where {T1<:AbstractString, T2<:AbstractString}
 
 Runs a query for historical data.
@@ -150,13 +155,14 @@ function bdh(session::Session, securities::Vector{T1}, fields::Vector{T2}, date_
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
-            timeout_milliseconds::Integer=UInt32(0)
+            timeout_milliseconds::Integer=UInt32(0),
+            error_handling::ErrorHandling=Unwrap()
         ) where {T1<:AbstractString, T2<:AbstractString}
 
     result = Dict()
 
     @sync for security in securities
-        @async result[security] = bdh($session, $security, $fields, $date_start, $date_end, periodicity=$periodicity, options=$options, verbose=$verbose, timeout_milliseconds=$timeout_milliseconds)
+        @async result[security] = bdh($session, $security, $fields, $date_start, $date_end, periodicity=$periodicity, options=$options, verbose=$verbose, timeout_milliseconds=$timeout_milliseconds, error_handling=$error_handling)
     end
 
     return result
