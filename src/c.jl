@@ -518,19 +518,17 @@ end
 # blpapi_element.h
 #
 
-#BLPAPI_EXPORT blpapi_Name_t*
-#blpapi_Element_name(const blpapi_Element_t *element);
+#blpapi_Name_t* blpapi_Element_name(const blpapi_Element_t *element);
 function blpapi_Element_name(element_handle::Ptr{Cvoid})
     ccall((:blpapi_Element_name, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), element_handle)
 end
 
-#BLPAPI_EXPORT blpapi_SchemaElementDefinition_t*
-#blpapi_Element_definition(const blpapi_Element_t* element);
+#blpapi_SchemaElementDefinition_t* blpapi_Element_definition(const blpapi_Element_t* element);
 function blpapi_Element_definition(element_handle::Ptr{Cvoid})
     ccall((:blpapi_Element_definition, libblpapi3), Ptr{Cvoid}, (Ptr{Cvoid},), element_handle)
 end
 
-#BLPAPI_EXPORT int blpapi_Element_datatype (
+#int blpapi_Element_datatype (
 #        const blpapi_Element_t* element);
 function blpapi_Element_datatype(element_handle::Ptr{Cvoid})
     ccall((:blpapi_Element_datatype, libblpapi3), Cint, (Ptr{Cvoid},), element_handle)
@@ -568,7 +566,7 @@ function blpapi_Element_hasElement(element_handle::Ptr{Cvoid}, element_name_stri
     ccall((:blpapi_Element_hasElement, libblpapi3), Cint, (Ptr{Cvoid}, Ptr{UInt8}, Ptr{Cvoid}), element_handle, element_name_string, element_blp_name)
 end
 
-#BLPAPI_EXPORT int blpapi_Element_isArray(
+#int blpapi_Element_isArray(
 #        const blpapi_Element_t* element);
 function blpapi_Element_isArray(element_handle::Ptr{Cvoid})
     ccall((:blpapi_Element_isArray, libblpapi3), Cint, (Ptr{Cvoid},), element_handle)
@@ -650,14 +648,14 @@ function blpapi_Element_numValues(element_handle::Ptr{Cvoid})
     ccall((:blpapi_Element_numValues, libblpapi3), Csize_t, (Ptr{Cvoid},), element_handle)
 end
 
-# int blpapi_Element_isNullValue(
+#int blpapi_Element_isNullValue(
 #        const blpapi_Element_t* element,
 #        size_t position);
 function blpapi_Element_isNullValue(element_handle::Ptr{Cvoid}, index::Integer)
     ccall((:blpapi_Element_isNullValue, libblpapi3), Cint, (Ptr{Cvoid}, Csize_t), element_handle, index)
 end
 
-#BLPAPI_EXPORT int blpapi_Element_isNull(
+#int blpapi_Element_isNull(
 #        const blpapi_Element_t* element);
 function blpapi_Element_isNull(element_handle::Ptr{Cvoid})
     ccall((:blpapi_Element_isNull, libblpapi3), Cint, (Ptr{Cvoid},), element_handle)
