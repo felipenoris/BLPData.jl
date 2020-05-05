@@ -100,20 +100,20 @@ end
 @testset "bdh" begin
     result = BLPData.bdh(SESSION, "IBM US Equity", ["PX_LAST", "VWAP_VOLUME"], Date(2020, 1, 2), Date(2020, 1, 30))
     df = DataFrame(result)
-    @test DataFrames.names(df) == [ :date, :PX_LAST, :VWAP_VOLUME ]
+    @test DataFrames.names(df) == [ "date", "PX_LAST", "VWAP_VOLUME" ]
     @test size(df) == (20, 3)
     show(df)
 
     @testset "periodicity" begin
         df = DataFrame(BLPData.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), periodicity="YEARLY"))
-        @test DataFrames.names(df) == [ :date, :PX_LAST ]
+        @test DataFrames.names(df) == [ "date", "PX_LAST" ]
         @test size(df) == (2, 2)
     end
 
     @testset "options" begin
         options = Dict("periodicitySelection" => "YEARLY", "periodicityAdjustment" => "CALENDAR")
         df = DataFrame(BLPData.bdh(SESSION, "PETR4 BS Equity", "PX_LAST", Date(2018, 2, 1), Date(2020, 2, 10), options=options))
-        @test DataFrames.names(df) == [ :date, :PX_LAST ]
+        @test DataFrames.names(df) == [ "date", "PX_LAST" ]
         @test size(df) == (2, 2)
     end
 
@@ -145,7 +145,7 @@ end
         )
 
         df = DataFrame(BLPData.bdh(SESSION, ticker, fields, Date(2019, 1, 1), Date(2019, 2, 10), options=options))
-        @test DataFrames.names(df) == [ :date, :PX_LAST, :TURNOVER, :PX_BID, :PX_ASK, :EQY_WEIGHTED_AVG_PX, :EXCHANGE_VWAP ]
+        @test DataFrames.names(df) == [ "date", "PX_LAST", "TURNOVER", "PX_BID", "PX_ASK", "EQY_WEIGHTED_AVG_PX", "EXCHANGE_VWAP" ]
         @test size(df) == (27, 7)
         show(df)
     end
@@ -167,7 +167,7 @@ end
         )
 
         df = DataFrame(BLPData.bdh(SESSION, ticker, field, Date(2019, 1, 1), Date(2019, 2, 10), options=options))
-        @test DataFrames.names(df) == [ :date, :PX_LAST ]
+        @test DataFrames.names(df) == [ "date", "PX_LAST" ]
         @test size(df) == (27, 2)
         show(df)
     end
@@ -210,14 +210,14 @@ end
 @testset "bds" begin
     @testset "COMPANY_ADDRESS" begin
         df = DataFrame(BLPData.bds(SESSION, "PETR4 BS Equity", "COMPANY_ADDRESS"))
-        @test DataFrames.names(df) == [:Address]
+        @test DataFrames.names(df) == [ "Address" ]
         @test df[end, :Address] == "Brazil"
         show(df)
     end
 
     @testset "DVD_HIST_GROSS_WITH_AMT_STAT" begin
         df = DataFrame(BLPData.bds(SESSION, "PETR4 BS Equity", "DVD_HIST_GROSS_WITH_AMT_STAT"))
-        @test DataFrames.names(df) == [ Symbol("Declared Date"), Symbol("Ex-Date"), Symbol("Record Date"), Symbol("Payable Date"), Symbol("Dividend Amount"), Symbol("Dividend Frequency"), Symbol("Dividend Type"), Symbol("Amount Status") ]
+        @test DataFrames.names(df) == [ "Declared Date", "Ex-Date", "Record Date", "Payable Date", "Dividend Amount", "Dividend Frequency", "Dividend Type", "Amount Status" ]
     end
 end
 
