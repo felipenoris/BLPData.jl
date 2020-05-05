@@ -23,6 +23,7 @@ BLPData.Session
 BLPData.DEFAULT_SERVICE_NAMES
 BLPData.ALL_SERVICE_NAMES
 BLPData.get_opened_services_names
+BLPData.is_service_open
 BLPData.stop
 BLPData.ClientMode
 BLPData.Service

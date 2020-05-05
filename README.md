@@ -25,7 +25,7 @@ to connect to Bloomberg Professional Services.
 This package aims to wrap each BLPAPI "Class" into an equivalent Julia type.
 Using this approach, the user can implement any query that BLPAPI provides
 and also inspect message schemas to discover what requests and responses are
-available from the API.
+available from the API, without having to use the C API directly.
 
 ## Requirements
 

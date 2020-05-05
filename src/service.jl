@@ -1,7 +1,4 @@
 
-@inline is_service_open(session::Session, service_name::AbstractString) = service_name ∈ session.opened_services
-@inline check_service_is_open(session::Session, service_name::AbstractString) = @assert is_service_open(session, service_name) "Service $service_name was not opened in this session."
-
 function Service(session::Session, service_name::AbstractString)
     service_name = service_name_str(service_name)
     check_service_is_open(session, service_name)
