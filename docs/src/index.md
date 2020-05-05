@@ -9,7 +9,7 @@ to connect to Bloomberg Professional Services.
 This package aims to wrap each BLPAPI "Class" into an equivalent Julia type.
 Using this approach, the user can implement any query that BLPAPI provides
 and also inspect message schemas to discover what requests and responses are
-available from the API.
+available from the API, without having to use the C API directly.
 
 ## Requirements
 
@@ -93,7 +93,7 @@ julia> BLPData.stop(session)
 
 ## Async support
 
-`BLPData.bdh` and `BLPData.bds` also accepts a list of tickers. In this case, the result is a `Dict`
+`BLPData.bdh` and `BLPData.bds` also accept a list of tickers. In this case, the result is a `Dict`
 where the key is the security name and value is a `Vector` of named tuples.
 BLPData will automatically process the securities in parallel.
 

@@ -2,6 +2,7 @@
 @testset "Session" begin
     session = BLPData.Session(service_download_timeout_msecs=2000)
     BLPData.get_opened_services_names(session) == BLPData.DEFAULT_SERVICE_NAMES
+    @test BLPData.is_service_open(session, "refdata")
     @test session.handle != C_NULL
     BLPData.stop(session)
     BLPData.destroy!(session)

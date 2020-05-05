@@ -106,7 +106,7 @@ const DEFAULT_SESSION_START_TIMEOUT_MSECS = UInt32(5000) # 5 secs
             verbose::Bool=false
         )
 
-Creates a new session for Bloomberg API.
+Creates a new session for Bloomberg API and opens the services listed in the `services` argument.
 
 See also [`stop`](@ref), [`ClientMode`](@ref), [`DEFAULT_SERVICE_NAMES`](@ref), [`ALL_SERVICE_NAMES`](@ref).
 
@@ -326,4 +326,17 @@ Returns the set of names for opened services for this `session`.
 """
 function get_opened_services_names(session::Session) :: Set{String}
     return deepcopy(session.opened_services)
+end
+
+"""
+    is_service_open(session::Session, service_name::AbstractString) :: Bool
+
+Returns `true` if `service_name` is opened in the `session`.
+"""
+@inline function is_service_open(session::Session, service_name::AbstractString) :: Bool
+    return service_name_str(service_name) ∈ session.opened_services
+end
+
+@inline function check_service_is_open(session::Session, service_name::AbstractString)
+    @assert is_service_open(session, service_name) "Service $service_name was not opened in this session."
 end
