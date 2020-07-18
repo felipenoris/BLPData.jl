@@ -90,7 +90,6 @@ end
         try
             BLPData.bdp(SESSION, invalid_security, "TICKER")
         catch err
-            @test err.err.code == 3
             @test err.err.category == "BAD_SEC"
             @test err.err.subcategory == "INVALID_SECURITY"
         end
