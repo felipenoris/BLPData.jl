@@ -21,7 +21,7 @@ function get_artifact_dir()
     artifacts_toml = joinpath(@__DIR__, "..", "Artifacts.toml")
     @assert isfile(artifacts_toml) "Couldn't find $artifacts_toml"
     artifact_dict = Pkg.Artifacts.load_artifacts_toml(artifacts_toml)
-    artifact_dir = Pkg.Artifacts.do_artifact_str("blpapi", artifact_dict, artifacts_toml, @__MODULE__)
+    artifact_dir = Pkg.Artifacts.@artifact_str("blpapi")
 end
 
 get_libblpapi_artifact_filepath() = joinpath(get_artifact_dir(), libblpapi3)
