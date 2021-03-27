@@ -4,11 +4,9 @@ using Pkg, Libdl
 function shared_lib_filename()
     if Sys.iswindows()
         return "blpapi3_64.dll"
-
     elseif Sys.islinux() || Sys.isapple()
         return "libblpapi3_64.so"
     end
-
     error("Unsupported system.")
 end
 
@@ -17,11 +15,15 @@ libblpapi3_handle = C_NULL # global var to be set at __init__() -> check_deps()
 const libblpapi3 = shared_lib_filename()
 
 function get_artifact_dir()
-    #artifact_dir = abspath(artifact"blpapi") # didn't work
-    artifacts_toml = joinpath(@__DIR__, "..", "Artifacts.toml")
-    @assert isfile(artifacts_toml) "Couldn't find $artifacts_toml"
-    artifact_dict = Pkg.Artifacts.load_artifacts_toml(artifacts_toml)
-    artifact_dir = Pkg.Artifacts.@artifact_str("blpapi")
+    if VERSION < v"1.6"
+        #artifact_dir = abspath(artifact"blpapi") # didn't work
+        artifacts_toml = joinpath(@__DIR__, "..", "Artifacts.toml")
+        @assert isfile(artifacts_toml) "Couldn't find $artifacts_toml"
+        artifact_dict = Pkg.Artifacts.load_artifacts_toml(artifacts_toml)
+        return Pkg.Artifacts.do_artifact_str("blpapi", artifact_dict, artifacts_toml, @__MODULE__)
+    else
+        return Pkg.Artifacts.@artifact_str("blpapi")
+    end
 end
 
 get_libblpapi_artifact_filepath() = joinpath(get_artifact_dir(), libblpapi3)
