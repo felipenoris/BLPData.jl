@@ -174,8 +174,9 @@ end
 
 @testset "bdh_intraday_ticks" begin
     @testset "Single security one field" begin
-        d0 = DateTime(2020, 4, 27, 13)
-        d1 = DateTime(2020, 4, 27, 13, 5)
+        d0 = DateTime(2021, 3, 22, 13)
+        d1 = DateTime(2021, 3, 22, 13, 5)
+
         res = BLPData.bdh_intraday_ticks(SESSION, "PETR4 BS Equity", ["ASK"], d0, d1)
         @test length(res) > 10
         @test length(res) < 30 # 20 max
@@ -185,8 +186,8 @@ end
     end
 
     @testset "Single security multiple fields" begin
-        d0 = DateTime(2020, 4, 27, 13)
-        d1 = DateTime(2020, 4, 27, 13, 5)
+        d0 = DateTime(2021, 3, 22, 13)
+        d1 = DateTime(2021, 3, 22, 13, 5)
         res = BLPData.bdh_intraday_ticks(SESSION, "PETR4 BS Equity", ["TRADE", "BID", "ASK"], d0, d1)
         @test length(res) > 10
         @test length(res) < 50
@@ -194,8 +195,8 @@ end
     end
 
     @testset "Multiple securities" begin
-        d0 = DateTime(2020, 4, 27, 13)
-        d1 = DateTime(2020, 4, 27, 13, 5)
+        d0 = DateTime(2021, 3, 22, 13)
+        d1 = DateTime(2021, 3, 22, 13, 5)
         res = BLPData.bdh_intraday_ticks(SESSION, ["PETR4 BS Equity", "VALE3 BS Equity"], ["TRADE", "BID", "ASK"], d0, d1)
         @test haskey(res, "PETR4 BS Equity")
         @test haskey(res, "VALE3 BS Equity")
@@ -237,8 +238,7 @@ end
                 "BBAS3 BS Equity",
                 "ITSA4 BS Equity",
                 "MGLU3 BS Equity",
-                "LREN3 BS Equity",
-                "VIVT4 BS Equity"
+                "LREN3 BS Equity"
              ]
 
     @testset "Async bds" begin

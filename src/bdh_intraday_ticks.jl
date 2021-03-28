@@ -13,8 +13,8 @@ Runs a `IntradayTickRequest` request.
 # Example
 
 ```julia
-d0 = DateTime(2020, 4, 27, 13)
-d1 = DateTime(2020, 4, 27, 13, 5)
+d0 = DateTime(2021, 3, 22, 13)
+d1 = DateTime(2021, 3, 22, 13, 5)
 res = BLPData.bdh_intraday_ticks(session, "PETR4 BS Equity", ["TRADE", "BID", "ASK"], d0, d1)
 df = DataFrame(res)
 show(df)
