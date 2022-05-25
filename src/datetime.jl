@@ -22,7 +22,7 @@ has_part(blp_datetime::BLPDateTime, part::UInt8) = blp_datetime.parts & part == 
 
 function Dates.Date(blp_datetime::BLPDateTime)
     # checks that parts mask implies a pure Date value
-    @assert blp_datetime.parts == BLPAPI_DATETIME_DATE_PART "BLPDateTime is not a Date. (parts mask = $P)."
+    @assert blp_datetime.parts == BLPAPI_DATETIME_DATE_PART || (blp_datetime.parts == (BLPAPI_DATETIME_DATE_PART | BLPAPI_DATETIME_OFFSET_PART) && blp_datetime.offset == 0) "BLPDateTime is not a Date. (parts mask = $(blp_datetime.parts), offset = $(Int(blp_datetime.offset)))."
     return Dates.Date(blp_datetime.year, blp_datetime.month, blp_datetime.day)
 end
 
