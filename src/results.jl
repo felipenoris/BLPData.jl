@@ -100,10 +100,13 @@ function parse_security_data_into!(
     nothing
 end
 
-function parse_security_data_into!(security_data_element::Element{false, BLPAPI_DATATYPE_SEQUENCE}, result::Dict{String, Any}, security::String,
+function parse_security_data_into!(
+            security_data_element::Element{false, BLPAPI_DATATYPE_SEQUENCE},
+            result::Dict{String, Any},
+            security::String,
             fields::Vector{T2},
-            error_handling::ErrorHandling
-        ) where {T1<:AbstractString, T2<:AbstractString}
+            error_handling::ErrorHandling,
+        ) where {T2<:AbstractString}
 
     @assert Symbol(get_name(security_data_element)) == :securityData
     @assert isa(security_data_element, Element{false, BLPAPI_DATATYPE_SEQUENCE})
@@ -151,7 +154,12 @@ function parse_field_data(field_data_vec::Element{true, BLPAPI_DATATYPE_SEQUENCE
     return unwrap(error_handling, FieldDataVecResult(field_exceptions_dict, result))
 end
 
-function parse_field_exceptions(field_exceptions_vec::Element{true, BLPAPI_DATATYPE_SEQUENCE}, security::AbstractString, error_handling::ErrorHandling) where {T}
+function parse_field_exceptions(
+            field_exceptions_vec::Element{true, BLPAPI_DATATYPE_SEQUENCE},
+            security::AbstractString,
+            error_handling::ErrorHandling,
+        )
+
     result = Dict{Symbol, Any}()
 
     for field_exception in get_element_value(field_exceptions_vec)
