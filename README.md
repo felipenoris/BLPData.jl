@@ -3,15 +3,15 @@
 
 [![License][license-img]](LICENSE)
 [![appveyor][appveyor-img]][appveyor-url]
-[![travis][travis-img]][travis-url]
+[![CI][ci-img]][ci-url]
 [![dev][docs-dev-img]][docs-dev-url]
 [![stable][docs-stable-img]][docs-stable-url]
 
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
 [appveyor-img]: https://img.shields.io/appveyor/ci/felipenoris/blpdata-jl/master.svg?logo=appveyor&label=Windows&style=flat-square
 [appveyor-url]: https://ci.appveyor.com/project/felipenoris/blpdata-jl/branch/master
-[travis-img]: https://img.shields.io/travis/felipenoris/BLPData.jl/master.svg?logo=travis&label=macOS&style=flat-square
-[travis-url]: https://travis-ci.org/felipenoris/BLPData.jl
+[ci-img]: https://github.com/felipenoris/XLSX.jl/workflows/CI/badge.svg
+[ci-url]: https://github.com/felipenoris/XLSX.jl/actions?query=workflow%3ACI
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg?style=flat-square
 [docs-dev-url]: https://felipenoris.github.io/BLPData.jl/dev
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg?style=flat-square
