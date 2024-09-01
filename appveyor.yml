@@ -3,6 +3,7 @@ environment:
   NO_BLP_SERVICE: 1
   matrix:
   - julia_version: 1.4
+  - julia_version: 1.9
   - julia_version: latest
 
 matrix:
