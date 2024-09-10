@@ -1,6 +1,6 @@
 [[blpapi]]
 arch = "x86_64"
-git-tree-sha1 = "5c366268f16c55e522bad96ae446ba619b904c0c"
+git-tree-sha1 = "57b7ceb6bdb7d7df12f208fbd71d5be13afa2f4e"
 os = "windows"
 
     [[blpapi.download]]
