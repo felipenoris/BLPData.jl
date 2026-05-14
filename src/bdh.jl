@@ -2,29 +2,32 @@
 function bdh(session::Session, security::AbstractString, field::AbstractString, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
         )
 
-    bdh(session, security, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
+    bdh(session, security, [field], date_start, date_end, periodicity=periodicity, options=options, overrides=overrides, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
 end
 
 function bdh(session::Session, securities::Vector{T}, field::AbstractString, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
         ) where {T<:AbstractString}
 
-    bdh(session, securities, [field], date_start, date_end, periodicity=periodicity, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
+    bdh(session, securities, [field], date_start, date_end, periodicity=periodicity, options=options, overrides=overrides, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
 end
 
 """
     bdh(session::Session, security::AbstractString, fields, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
@@ -40,6 +43,8 @@ See also [`bds`](@ref).
 * `fields` argument is either a single string or an array of string values.
 
 * `options` argument expects a key->value pairs or a `Dict`.
+
+* `overrides` argument expects a key->value pairs or a `Dict`.
 
 * `periodicity` expects the string value for the `periodicitySelection` option.
 
@@ -83,6 +88,7 @@ df = DataFrame(BLPData.bdh(session, ticker, field, Date(2019, 1, 1), Date(2019, 
 function bdh(session::Session, security::AbstractString, fields::Vector{T}, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
@@ -104,6 +110,14 @@ function bdh(session::Session, security::AbstractString, fields::Vector{T}, date
         if options != nothing
             for (k, v) in options
                 req[k] = v
+            end
+        end
+
+        if overrides != nothing
+            for (override, value) in overrides
+                el = append_element(req["overrides"])
+                el["fieldId"] = override
+                el["value"] = value
             end
         end
     end
@@ -141,6 +155,7 @@ end
     bdh(session::Session, securities::Vector{T1}, fields::Vector{T2}, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
@@ -154,6 +169,7 @@ Internally, BLPData will process a `ReferenceDataRequest` request for each secur
 function bdh(session::Session, securities::Vector{T1}, fields::Vector{T2}, date_start::Date, date_end::Date;
             periodicity=nothing, # periodicitySelection option
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
@@ -162,7 +178,7 @@ function bdh(session::Session, securities::Vector{T1}, fields::Vector{T2}, date_
     result = Dict()
 
     @sync for security in securities
-        @async result[security] = bdh($session, $security, $fields, $date_start, $date_end, periodicity=$periodicity, options=$options, verbose=$verbose, timeout_milliseconds=$timeout_milliseconds, error_handling=$error_handling)
+        @async result[security] = bdh($session, $security, $fields, $date_start, $date_end, periodicity=$periodicity, options=$options, overrides=$overrides, verbose=$verbose, timeout_milliseconds=$timeout_milliseconds, error_handling=$error_handling)
     end
 
     return result

@@ -467,3 +467,12 @@ function push_named_tuples!(result::T, element_vec::Element{true, BLPAPI_DATATYP
 end
 
 to_named_tuple(element::Element{false, BLPAPI_DATATYPE_SEQUENCE}) = (; [ (Symbol(get_name(child_element)), get_element_value(child_element)) for child_element in each_child_element(element) ]...)
+
+
+#### new function ###
+function append_element(element::AbstractElement{true, BLPAPI_DATATYPE_SEQUENCE})
+    result_element_handle_ref = Ref{Ptr{Cvoid}}(C_NULL)
+    err = blpapi_Element_appendElement(element.handle, result_element_handle_ref)
+    error_check(err, "Failed to append element $(get_name(element))")
+    return Element(result_element_handle_ref[], element)
+end

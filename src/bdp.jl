@@ -2,6 +2,7 @@
 """
     bdp(session::Session, security::AbstractString, fields;
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
@@ -28,27 +29,30 @@ julia> BLPData.bdp(session, "PETR4 BS Equity", ["PX_LAST", "VOLUME"])
 """
 function bdp(session::Session, security::AbstractString, fields::Vector{T};
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
         ) where {T<:AbstractString}
 
-    bdp_result = bdp(session, [security], fields, options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
+    bdp_result = bdp(session, [security], fields, options=options, overrides=overrides, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
     return bdp_result[security]
 end
 
 function bdp(session::Session, security::AbstractString, fields::AbstractString;
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
         )
 
-    bdp(session, security, [fields], options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
+    bdp(session, security, [fields], options=options, overrides=overrides, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
 end
 
 function bdp(session::Session, securities::Vector{T1}, fields::Vector{T2};
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
@@ -63,6 +67,14 @@ function bdp(session::Session, securities::Vector{T1}, fields::Vector{T2};
         if options != nothing
             for (k, v) in options
                 req[k] = v
+            end
+        end
+
+        if overrides != nothing
+            for (override, value) in overrides
+                el = append_element(req["overrides"])
+                el["fieldId"] = override
+                el["value"] = value
             end
         end
     end
@@ -82,10 +94,11 @@ end
 
 function bdp(session::Session, securities::Vector{T}, field::AbstractString;
             options=nothing, # expects key->value pairs or Dict
+            overrides=nothing, # expects key->value pairs or Dict
             verbose::Bool=false,
             timeout_milliseconds::Integer=UInt32(0),
             error_handling::ErrorHandling=Unwrap()
         ) where {T<:AbstractString}
 
-    bdp(session, securities, [field], options=options, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
+    bdp(session, securities, [field], options=options, overrides=overrides, verbose=verbose, timeout_milliseconds=timeout_milliseconds, error_handling=error_handling)
 end
