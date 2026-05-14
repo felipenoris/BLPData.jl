@@ -746,6 +746,14 @@ function blpapi_Element_getValueAsName(element_handle::Ptr{Cvoid}, buffer_ref::R
     ccall((:blpapi_Element_getValueAsName, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}, Csize_t), element_handle, buffer_ref, index)
 end
 
+### new function, based on blpapi_Element_getChoice ###
+
+#int blpapi_Element_appendElement(
+#        blpapi_Element_t *element, blpapi_Element_t **appendedElement);
+function blpapi_Element_appendElement(element_handle::Ptr{Cvoid}, result_element_handle_ref::Ref{Ptr{Cvoid}})
+    ccall((:blpapi_Element_appendElement, libblpapi3), Cint, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}), element_handle, result_element_handle_ref)
+end
+
 #
 # blpapi_event.h
 #
